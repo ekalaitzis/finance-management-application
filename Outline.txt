@@ -1,0 +1,18 @@
+
+
+Family(id,family_name) -> person(username, password) -> categories(name) -> income\expense(name, type:in - out, amount)
+                            |---> add, edit, remove categories                  |
+                                                                                |----> add, edit, remove (set one expense income to monthly) 
+
+
+
+export to xls - import from xls (XlsxWriter)
+
+Database (Mysql) -> to do: create tables -> create unions -> add data ex (username: nikos - password:123 -> categories -> Food, supermarket, salary -> income: A B company , in, 2048.50 $)
+
+
+
+Graphical User Interface (tkinker) to do:
+
+
+
