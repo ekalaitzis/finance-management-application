@@ -38,7 +38,7 @@ CREATE TABLE member
     family_id            INTEGER,
     first_name           VARCHAR(255) NOT NULL,
     last_name            VARCHAR(255) NOT NULL,
-    email                VARCHAR(100) NOT NULL,
+    email                VARCHAR(255) NOT NULL UNIQUE,
     password             VARCHAR(255),
     CONSTRAINT fk_family
         FOREIGN KEY (family_id)
@@ -46,7 +46,7 @@ CREATE TABLE member
             ON DELETE CASCADE
 );
 
-COMMENT ON TABLE user IS 'Table to store personal and contact details of the family member.';
+COMMENT ON TABLE member IS 'Table to store personal and contact details of the family member.';
 COMMENT ON COLUMN member.family_id IS 'Foreign key reference to the family';
 COMMENT ON COLUMN member.first_name IS 'First name of the person';
 COMMENT ON COLUMN member.last_name IS 'Last name of the person';
@@ -57,11 +57,11 @@ COMMENT ON COLUMN member.password IS 'Password of the person';
 CREATE TABLE category
 (
     id                  SERIAL PRIMARY KEY,
-    category_name       VARCHAR(255),
-    user_id             INTEGER NOT NULL,
-    CONSTRAINT fk_user
-        FOREIGN KEY (user_id)
-            REFERENCES user (id)
+    category_name       VARCHAR(255) NOT NULL,
+    member_id             INTEGER NOT NULL,
+    CONSTRAINT fk_member
+        FOREIGN KEY (member_id)
+            REFERENCES member (id)
             ON DELETE CASCADE
 );
 
@@ -71,9 +71,10 @@ COMMENT ON COLUMN category.category_name IS 'Name of the category';
 CREATE TABLE transactions
 (
     id                  SERIAL PRIMARY KEY,
-    transaction_name    VARCHAR(255),
-    transaction_type    transaction_type_enum,
-    amount              DOUBLE,
+    transaction_name    VARCHAR(255)NOT NULL,
+    transaction_type    transaction_type_enum NOT NULL,
+    amount              DOUBLE NOT NULL,
+    date                Date NOT NULL,
     category_id         INTEGER NOT NULL,
     CONSTRAINT fk_category
         FOREIGN KEY (category_id)
