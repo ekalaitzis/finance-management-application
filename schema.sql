@@ -82,7 +82,7 @@ CREATE TABLE transactions
             ON DELETE CASCADE
 );
 
-COMMENT ON TABLE transactions IS 'Table to store details of work experiences of a candidate';
+COMMENT ON TABLE transactions IS 'Table to store detail transactions';
 COMMENT ON COLUMN transactions.transaction_name IS 'Name of the transaction';
 COMMENT ON COLUMN transactions.transaction_type IS 'The transaction type is either income or expense';
 COMMENT ON COLUMN transactions.amount IS 'The amount of the transaction';
