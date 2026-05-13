@@ -2,17 +2,14 @@
 
 
 class Family:
-    def __init__(self)
-        
-
-    pass
+    def __init__(self,familyId, familyName):
+        self.familyId = familyId
+        self.familyName = familyName
 
     def __str(self):
+        return f"this is the {self.familyName} Family!"
 
-        pass
-
-
-
+        
 
     def createFamily():
         pass
@@ -24,15 +21,20 @@ class Family:
         pass
     
 class Member:
-    def __init__(self)
-        
-
-    pass
+    def __init__(self, id,familyId, firstName, lastName, email, password):
+        self.id = id
+        self.family_id = familyId
+        self.first_name = firstName
+        self.last_name = lastName
+        self.email = email
+        self.password = password
 
     def __str(self):
+        m1 = "First name:" + str(self.firstName) + "\n"
+        m2 = "Last name:" + str(self.lastName) + "\n"
+        m3 = "Email:" + str(self.email) + "\n"
 
-        pass
-
+        return m1 + m2 + m3
     
     def createMember():
         pass
@@ -44,10 +46,11 @@ class Member:
         pass
 
 class Category:
-    def __init__(self)
-        
+    def __init__(self,id, categoryName, memberId):
+        self.id = id
+        self.categoryName = categoryName
+        self.memberId = memberId
 
-    pass
 
     def __str(self):
 
@@ -64,10 +67,10 @@ class Category:
         pass
 
 class Transaction:
-    def __init__(self)
+    def __init__(self):
         
 
-    pass
+     pass
 
     def __str(self):
 
