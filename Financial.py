@@ -7,7 +7,7 @@ class Family:
         self.familyName = familyName
 
     def __str(self):
-        return f"this is the {self.familyName} Family!"
+        return f"This is the {self.familyName} Family!"
 
         
 
@@ -21,8 +21,8 @@ class Family:
         pass
     
 class Member:
-    def __init__(self, id,familyId, firstName, lastName, email, password):
-        self.id = id
+    def __init__(self, memberId,familyId, firstName, lastName, email, password):
+        self.id = memberId
         self.family_id = familyId
         self.first_name = firstName
         self.last_name = lastName
@@ -32,7 +32,7 @@ class Member:
     def __str(self):
         m1 = "First name:" + str(self.firstName) + "\n"
         m2 = "Last name:" + str(self.lastName) + "\n"
-        m3 = "Email:" + str(self.email) + "\n"
+        m3 = "Email:" + str(self.email)
 
         return m1 + m2 + m3
     
@@ -46,16 +46,16 @@ class Member:
         pass
 
 class Category:
-    def __init__(self,id, categoryName, memberId):
-        self.id = id
+    def __init__(self,categoryId, categoryName, memberId):
+        self.id = categoryId
         self.categoryName = categoryName
         self.memberId = memberId
 
 
     def __str(self):
-
-        pass
-
+        c1 = "Category:" + str(self.categoryName) + "\n"
+        c2 = "Member Id:" + str(self.memberId)
+        return c1 + c2
     
     def createCategory():
         pass
@@ -67,15 +67,21 @@ class Category:
         pass
 
 class Transaction:
-    def __init__(self):
-        
+    def __init__(self, transactionName, transactionType, amount, date, categoryId):
+        self.transactionName = transactionName
+        self.transactionType = transactionType
+        self.amount = amount
+        self.date = date
+        self.categoryId = categoryId
 
-     pass
 
     def __str(self):
-
-        pass
-    
+        t1 = "Transaction name:" + str(self.transactionName) + "\n"
+        t2 = "Transaction type:" + str(self.transactionType) + "\n"
+        t3 = "Amount:" + str(self.amount) + "\n"
+        t4 = "Date:" + str(self.date) + "\n"
+        t5 = "Category Id:" + str(self.categoryId)
+        return t1 + t2 + t3 + t4 + t5    
     
     def createTransaction():
         pass
