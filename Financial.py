@@ -11,33 +11,10 @@ DEFAULT_CATEGORIES = [
 conn = sqlite3.connect('Finance.db')
 cursor = conn.cursor()
 
-
-class Family:
-    def __init__(self,familyId, familyName):
-        self.familyId = familyId
-        self.familyName = familyName
-
-    def __str__(self):
-        return f"This is the {self.familyName} Family!"
-        
-    def createFamily(self, fname):
-        cursor.execute("INSERT INTO family (family_name) VALUES (?)", (fname,))
-        self.familyId = cursor.lastrowid
-        self.familyName = fname
-        conn.commit() 
-        
-        
-    def deleteFamily(self, fname):
-        cursor.execute("DELET FROM family WHERE family_name = ?", (fname,))
-        self.familyId = None
-        self.familyName = None
-        conn.commit() 
-
     
 class Member:
-    def __init__(self, memberId,familyId, firstName, lastName,username, password):
+    def __init__(self, memberId, firstName, lastName,username, password):
         self.id = memberId
-        self.family_id = familyId
         self.firstName = firstName
         self.lastName = lastName
         self.username = username
@@ -81,9 +58,6 @@ class Transaction:
         t5 = "Category Id:" + str(self.categoryId)
         return t1 + t2 + t3 + t4 + t5    
     
-
-
-
 
 
 def main():
