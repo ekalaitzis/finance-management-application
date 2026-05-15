@@ -1,17 +1,3 @@
----------------------------------------
---  Dropping existing Database Tables  --
----------------------------------------
-DROP TYPE IF EXISTS transactions;
-DROP TABLE IF EXISTS family;
-DROP TABLE IF EXISTS user;
-DROP TABLE IF EXISTS category;
-DROP TABLE IF EXISTS transactions;
-
----------------------------------------
---  Creation of Tables  --
----------------------------------------
-
--- Create transaction type enum
 
 CREATE TABLE family (
     id INTEGER PRIMARY KEY,
@@ -24,7 +10,7 @@ CREATE TABLE member
     family_id            INTEGER NOT NULL,
     first_name           TEXT NOT NULL,
     last_name            TEXT NOT NULL,
-    email                TEXT NOT NULL UNIQUE,
+    username             TEXT NOT NULL UNIQUE,
     password             TEXT NOT NULL,
         FOREIGN KEY (family_id)
             REFERENCES family(id)
@@ -35,7 +21,7 @@ CREATE TABLE member
 CREATE TABLE category
 (
     id                  INTEGER PRIMARY KEY,
-    category_name       TEXT UNIQUE NOT NULL,
+    category_name       TEXT NOT NULL,
     member_id           INTEGER NOT NULL,
     CONSTRAINT fk_member
         FOREIGN KEY (member_id)
