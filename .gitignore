@@ -5,8 +5,7 @@ finance2.db
 financial.sql
 finance2.db-journal
 
-
-
-
-
-
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
