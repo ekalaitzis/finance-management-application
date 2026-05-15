@@ -13,7 +13,7 @@ cursor = conn.cursor()
 
     
 class Member:
-    def __init__(self, memberId, firstName, lastName,username, password):
+    def __init__(self, firstName, lastName, username, password, memberId=None):
         self.id = memberId
         self.firstName = firstName
         self.lastName = lastName
@@ -26,7 +26,13 @@ class Member:
         m3 = "Username:" + str(self.username)
 
         return m1 + m2 + m3
-    
+
+    def addMember(self):
+        cursor.execute("INSERT INTO member (first_name, last_name, username, password) VALUES (?,?,?,?)",
+            (self.firstName, self.lastName, self.username, self.password))
+        self.memberId = cursor.lastrowid
+        conn.commit()
+   
 
 class Category:
     def __init__(self,categoryId, categoryName, memberId):
@@ -61,4 +67,10 @@ class Transaction:
 
 
 def main():
+
+    m1 = Member("Dimitris", "Tsoukalas", "osfp", "123pass")
+    m1.addMember()
     print("Hello")
+
+if __name__ == "__main__":
+    main()

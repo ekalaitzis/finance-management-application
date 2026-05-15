@@ -1,20 +1,11 @@
 
--- CREATE TABLE family (
---     id INTEGER PRIMARY KEY,
---     family_name TEXT NOT NULL                   
--- );
-
 CREATE TABLE member
 (
     id                   INTEGER PRIMARY KEY,
-    -- family_id            INTEGER NOT NULL,
     first_name           TEXT NOT NULL,
     last_name            TEXT NOT NULL,
     username             TEXT NOT NULL UNIQUE,
     password             TEXT NOT NULL
-        -- FOREIGN KEY (family_id)
-        --     REFERENCES family(id)
-        --     ON DELETE CASCADE
 );
 
 
