@@ -27,18 +27,19 @@ class Member:
 
         return m1 + m2 + m3
 
-    def addMember(self):
+    def addMember(self):            # method to add user to the db
         try:
             cursor.execute("INSERT INTO member (first_name, last_name, username, password) VALUES (?,?,?,?)",
                 (self.firstName, self.lastName, self.username, self.password))
             self.memberId = cursor.lastrowid
-            Category.addDefaultCategories(self)
+            Category.addDefaultCategories(self)         # on creation of a user add the default categries
             conn.commit()
             passw = "*" * len(self.password)
             print(f"Added member to the DB. Welcome {self.firstName}, {self.lastName} with username {self.username} and password {passw}.")
+            return True         # If the addition was succesfull display a message like the above
         except sqlite3.IntegrityError:
             print("This action is restricted, check if all the fields are valid and try again.")
-
+            return False         # If the addition was not succesfull display an error message, this is if the user already exists or a null value is given
 
     def getMemberUsername(self):
         return self.username
@@ -49,24 +50,28 @@ class Category:
         self.categoryName = categoryName
         self.memberId = memberId
 
-
     def __str__(self):
         c1 = "Category:" + str(self.categoryName) + "\n"
         c2 = "Member Id:" + str(self.memberId)
         return c1 + c2
-    
 
-    def addDefaultCategories(self):
-        for category in DEFAULT_CATEGORIES:
-            cursor.execute("INSERT INTO category (category_name,member_id) VALUES (?,?)",
-            (category, self.memberId))
-        user = Member.getMemberUsername(self)
-        print(f"Added the default categories to {user}.")
+    def addDefaultCategories(self):          # method to add to the default categries to the db
+        try:
+            for category in DEFAULT_CATEGORIES:
+                cursor.execute("INSERT INTO category (category_name,member_id) VALUES (?,?)",
+                (category, self.memberId))
+            user = Member.getMemberUsername(self)
+            print(f"Added the default categories to {user}.")
+            return True
+        except sqlite3.IntegrityError:
+            print("This action is restricted, check if all the fields are valid and try again.")
+            return False
 
-    def addNewCategory(self):
+    def addNewCategory(self):               #method to add new category to a user
         cursor.execute("INSERT INTO category (category_name,member_id) VALUES (?,?)",
         (self.categoryName, self.memberId))
-
+        user = Member.getMemberUsername(self)
+        print(f"Added the default categories to {user}.")
 
 class Transaction:
     def __init__(self, transactionName, transactionType, amount, date, categoryId, transactionId=None):
@@ -89,8 +94,8 @@ def main():
 
     m1 = Member("George", "Tsoukalas", "Gtsouk3", "secret")
     m1.addMember()
-    c1 = Category("Temporary", )
-    c1.addNewCategory(c1)
+    c1 = Category("Temporary", m1.memberId)
+    c1.addNewCategory()
     print("Hello")
 
 if __name__ == "__main__":
