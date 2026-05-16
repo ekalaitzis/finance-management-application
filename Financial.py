@@ -28,11 +28,15 @@ class Member:
         return m1 + m2 + m3
 
     def addMember(self):
-        cursor.execute("INSERT INTO member (first_name, last_name, username, password) VALUES (?,?,?,?)",
-            (self.firstName, self.lastName, self.username, self.password))
-        self.memberId = cursor.lastrowid
-        conn.commit()
-   
+        try:
+            cursor.execute("INSERT INTO member (first_name, last_name, username, password) VALUES (?,?,?,?)",
+                (self.firstName, self.lastName, self.username, self.password))
+            self.memberId = cursor.lastrowid
+            conn.commit()
+            passw = "*" * len(self.password)
+            print(f"Added member to the DB. Welcome {self.firstName}, {self.lastName} with username {self.username} and password {passw}.")
+        except sqlite3.IntegrityError:
+            print("The username is already taken.")
 
 class Category:
     def __init__(self,categoryId, categoryName, memberId):
@@ -46,7 +50,6 @@ class Category:
         c2 = "Member Id:" + str(self.memberId)
         return c1 + c2
     
-
 class Transaction:
     def __init__(self, transactionName, transactionType, amount, date, categoryId):
         self.transactionName = transactionName
@@ -55,20 +58,17 @@ class Transaction:
         self.date = date        # this should set to get current date and time maybe timestamp
         self.categoryId = categoryId
 
-
     def __str__(self):
         t1 = "Transaction name:" + str(self.transactionName) + "\n"
         t2 = "Transaction type:" + str(self.transactionType) + "\n"
         t3 = "Amount:" + str(self.amount) + "\n"
         t4 = "Date:" + str(self.date) + "\n"  
         t5 = "Category Id:" + str(self.categoryId)
-        return t1 + t2 + t3 + t4 + t5    
-    
-
+        return t1 + t2 + t3 + t4 + t5
 
 def main():
 
-    m1 = Member("Dimitris", "Tsoukalas", "osfp", "123pass")
+    m1 = Member("Nikolas", "Tsoukalas", "NNick", "123456")
     m1.addMember()
     print("Hello")
 
