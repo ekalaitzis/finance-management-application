@@ -12,7 +12,7 @@ CREATE TABLE member
 CREATE TABLE category
 (
     id                  INTEGER PRIMARY KEY,
-    category_name       TEXT NOT NULL,
+    category_name       TEXT NOT NULL UNIQUE,
     member_id           INTEGER NOT NULL,
     CONSTRAINT fk_member
         FOREIGN KEY (member_id)
@@ -20,7 +20,7 @@ CREATE TABLE category
             ON DELETE CASCADE
 );
 
-CREATE TABLE transactions
+CREATE TABLE transaction
 (
     id                  INTEGER PRIMARY KEY,
     transaction_name    TEXT NOT NULL,

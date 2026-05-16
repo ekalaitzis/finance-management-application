@@ -14,7 +14,7 @@ cursor = conn.cursor()
     
 class Member:
     def __init__(self, firstName, lastName, username, password, memberId=None):
-        self.id = memberId
+        self.memberId = memberId
         self.firstName = firstName
         self.lastName = lastName
         self.username = username
@@ -32,15 +32,20 @@ class Member:
             cursor.execute("INSERT INTO member (first_name, last_name, username, password) VALUES (?,?,?,?)",
                 (self.firstName, self.lastName, self.username, self.password))
             self.memberId = cursor.lastrowid
+            Category.addDefaultCategories(self)
             conn.commit()
             passw = "*" * len(self.password)
             print(f"Added member to the DB. Welcome {self.firstName}, {self.lastName} with username {self.username} and password {passw}.")
         except sqlite3.IntegrityError:
             print("This action is restricted, check if all the fields are valid and try again.")
 
+
+    def getMemberUsername(self):
+        return self.username
+
 class Category:
-    def __init__(self,categoryId, categoryName, memberId):
-        self.id = categoryId
+    def __init__(self, categoryName, memberId, categoryId= None):
+        self.categoryId = categoryId
         self.categoryName = categoryName
         self.memberId = memberId
 
@@ -50,8 +55,22 @@ class Category:
         c2 = "Member Id:" + str(self.memberId)
         return c1 + c2
     
+
+    def addDefaultCategories(self):
+        for category in DEFAULT_CATEGORIES:
+            cursor.execute("INSERT INTO category (category_name,member_id) VALUES (?,?)",
+            (category, self.memberId))
+        user = Member.getMemberUsername(self)
+        print(f"Added the default categories to {user}.")
+
+    def addNewCategory(self):
+        cursor.execute("INSERT INTO category (category_name,member_id) VALUES (?,?)",
+        (self.categoryName, self.memberId))
+
+
 class Transaction:
-    def __init__(self, transactionName, transactionType, amount, date, categoryId):
+    def __init__(self, transactionName, transactionType, amount, date, categoryId, transactionId=None):
+        self.transactionId = transactionId
         self.transactionName = transactionName
         self.transactionType = transactionType
         self.amount = amount
@@ -68,8 +87,10 @@ class Transaction:
 
 def main():
 
-    m1 = Member("a", "Tsoukalas", "sasdas", None)
+    m1 = Member("George", "Tsoukalas", "Gtsouk3", "secret")
     m1.addMember()
+    c1 = Category("Temporary", )
+    c1.addNewCategory(c1)
     print("Hello")
 
 if __name__ == "__main__":
