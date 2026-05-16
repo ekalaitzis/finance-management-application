@@ -36,7 +36,7 @@ class Member:
             passw = "*" * len(self.password)
             print(f"Added member to the DB. Welcome {self.firstName}, {self.lastName} with username {self.username} and password {passw}.")
         except sqlite3.IntegrityError:
-            print("The username is already taken.")
+            print("This action is restricted, check if all the fields are valid and try again.")
 
 class Category:
     def __init__(self,categoryId, categoryName, memberId):
@@ -68,7 +68,7 @@ class Transaction:
 
 def main():
 
-    m1 = Member("Nikolas", "Tsoukalas", "NNick", "123456")
+    m1 = Member("a", "Tsoukalas", "sasdas", None)
     m1.addMember()
     print("Hello")
 
