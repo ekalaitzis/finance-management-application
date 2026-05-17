@@ -29,7 +29,8 @@ class Member:
 
     def addMember(self):            # method to add user to the db
         try:
-            cursor.execute("INSERT INTO member (first_name, last_name, username, password) VALUES (?,?,?,?)",
+            with conn:
+                cursor.execute("INSERT INTO member (first_name, last_name, username, password) VALUES (?,?,?,?)",
                 (self.firstName, self.lastName, self.username, self.password))
             self.memberId = cursor.lastrowid
             Category.addDefaultCategories(self)         # on creation of a user add the default categries
@@ -41,6 +42,12 @@ class Member:
             print("This action is restricted, check if all the fields are valid and try again.")
             return False         # If the addition was not succesfull display an error message, this is if the user already exists or a null value is given
 
+    def getMemberById(memberId):
+        cursor.execute("SELECT * FROM member WHERE member_id=:member_id", {'member_id': memberId})
+        row = cursor.fetchone()
+        member = Member(row[1], row[2], row[3], row[4], row[0])
+        return member
+    
     def getMemberUsername(self):
         return self.username
 
@@ -57,8 +64,9 @@ class Category:
 
     def addDefaultCategories(self):          # method to add to the default categries to the db
         try:
-            for category in DEFAULT_CATEGORIES:
-                cursor.execute("INSERT INTO category (category_name,member_id) VALUES (?,?)",
+            with conn:
+                for category in DEFAULT_CATEGORIES:
+                    cursor.execute("INSERT INTO category (category_name,member_id) VALUES (?,?)",
                 (category, self.memberId))
             user = Member.getMemberUsername(self)
             print(f"Added the default categories to {user}.")
@@ -67,12 +75,35 @@ class Category:
             print("This action is restricted, check if all the fields are valid and try again.")
             return False
 
-    def addNewCategory(self):               #method to add new category to a user
-        cursor.execute("INSERT INTO category (category_name,member_id) VALUES (?,?)",
-        (self.categoryName, self.memberId))
-        user = Member.getMemberUsername(self)
-        print(f"Added the default categories to {user}.")
+    def addNewCategory(self, member):               #method to add new category to a user
+        user = member.username
+        print(str(member.memberId) + " = member id " + str(user) + " = username")
+        try:
+            with conn:
+                cursor.execute("INSERT INTO category (category_name,member_id) VALUES (?,?)",
+            (self.categoryName, member.memberId))
+            print(f"Added the {self.categoryName} category to {user}.")
+            conn.commit()
+            return True
+        except sqlite3.IntegrityError:
+            print("This action is restricted, check if all the fields are valid and try again.")
+            return False
+        
+    def getCategoriesByMemberId(memberId):
+        member = Member.getMemberById(memberId)
+        user = member.username
+        try:
+            with conn:
+                cursor.execute("SELECT * FROM category WHERE member_id=:member_id", {'member_id': memberId})
+            categories = cursor.fetchall()
+            print(f"Here are the categories of the {user}. \n {categories}")
+            return True
+        except sqlite3.IntegrityError:
+            print("This action is restricted, check if all the fields are valid and try again.")
+            return False
 
+
+        
 class Transaction:
     def __init__(self, transactionName, transactionType, amount, date, categoryId, transactionId=None):
         self.transactionId = transactionId
@@ -95,8 +126,9 @@ def main():
     m1 = Member("George", "Tsoukalas", "Gtsouk3", "secret")
     m1.addMember()
     c1 = Category("Temporary", m1.memberId)
-    c1.addNewCategory()
+    c1.addNewCategory(m1)
     print("Hello")
+    Category.getCategoriesByMemberId(m1.memberId)
 
 if __name__ == "__main__":
     main()
