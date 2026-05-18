@@ -64,6 +64,25 @@ class Member:
     def getMemberUsername(self):                        ## temp, to be deleted
         return self.username
     
+    def getMemberByUsername(username):                  # method to get member obj with a username, can be used to check if a username exists in the DB
+            with conn:
+                cursor.execute("SELECT * FROM member WHERE username=:username", {'username': username})
+            memnber = cursor.fetchone()
+            if memnber:
+                return memnber
+            else:
+                return None
+
+    def validateMember(username, password):             # method to validate a username and password against the DB records,use for login
+        member = Member.getMemberByUsername(username)
+        if member == None:
+            print(f"{username} was not found in the database")
+            return False
+        if member[4] == password:
+            return True
+        else:
+            return False
+
 class Category:
     def __init__(self, categoryName, memberId, categoryId= None):
         self.categoryId = categoryId
@@ -140,8 +159,19 @@ class Transaction:
 
     def createTransaction():                            #method to add new transaction to a member
         pass
-    def getAllTransactionsByMemberId():                 # method to get all transactions of a member from the db
-        pass
+    def getAllTransactionsByMemberId(self, memberId):                 # method to get all transactions of a member from the db
+        member = Member.getMemberByMemberId(memberId)
+        user = member.username
+        try:
+            with conn:
+                cursor.execute("SELECT * FROM transaction WHERE member_id=:member_id", {'member_id': memberId})
+            transactions = cursor.fetchall()
+            print(f"Here are the transactions of the {user}. \n {transactions}")
+            return True
+        except sqlite3.IntegrityError:
+            print("This action is restricted, check if all the fields are valid and try again.")
+            return False
+        
     def UpdateTransactionByTransactionId():             # method to edit a transaction of a member from the db
         pass
     def deleteTransactionByTransactionId():             # method to delete a transaction of a member from the db
@@ -177,9 +207,11 @@ def menu():
             elif choice == '2':
                 Member.getAllMembers()
             elif choice == '3':
-                Member.updateMemberByid()
+                id = int(input("Select member id:"))
+                Member.updateMemberByid(id)
             elif choice == '4':
-                Member.deleteMemberByid()
+                id = int(input("Select member id:"))
+                Member.deleteMemberByid(id)
 
             elif choice == '5':
                 cat = input("Insert category name: ")
@@ -197,7 +229,8 @@ def menu():
             elif choice == '11':
                 Transaction.createTransaction()
             elif choice == '12':
-                Transaction.getAllTransactionsByMemberId()
+                id = int(input("Select member id:"))
+                Transaction.getAllTransactionsByMemberId(id)
             elif choice == '13':
                Transaction.UpdateTransactionByTransactionId()
             elif choice == '14':
