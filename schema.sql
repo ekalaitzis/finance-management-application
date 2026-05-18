@@ -14,7 +14,7 @@ CREATE TABLE member
 CREATE TABLE category
 (
     category_id         INTEGER PRIMARY KEY,
-    category_name       TEXT NOT NULL UNIQUE,
+    category_name       TEXT NOT NULL,
     member_id           INTEGER NOT NULL,
     CONSTRAINT fk_member
         FOREIGN KEY (member_id)
