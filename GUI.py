@@ -18,8 +18,23 @@ def show_login():
 
 def show_dashboard():
     login_fr.pack_forget()
-    main.geometry("1200x700")
+    main.geometry("1200x800")
     dashboard_fr.pack(fill="both", expand=True)
+
+def show_overview():
+    overview_fr.tkraise()
+
+def show_account():
+    account_fr.tkraise()
+
+def show_income():
+    income_fr.tkraise()
+
+def show_expenses():
+    expenses_fr.tkraise()
+
+def show_subscription():
+    subscription_fr.tkraise()
 
 # =========================
 # Main Window
@@ -130,11 +145,11 @@ navigation_fr.pack_propagate(False)
 navigation_fr.pack (fill= "both")
 
 # Navigation widgets
-overview_button = tk.Button (navigation_fr, text= "Overview",width= 30, anchor= "w")
-account_button = tk.Button (navigation_fr, text= "Account",width= 30, anchor= "w")
-expenses_button = tk.Button (navigation_fr, text= "expenses",width= 30, anchor= "w")
-income_button = tk.Button (navigation_fr, text= "income",width= 30, anchor= "w")
-subscription_button = tk.Button (navigation_fr, text= "subscription",width= 30, anchor= "w")
+overview_button = tk.Button (navigation_fr, text= "Overview",width= 30, anchor= "w", command= show_overview )
+account_button = tk.Button (navigation_fr, text= "Account",width= 30, anchor= "w", command = show_account)
+expenses_button = tk.Button (navigation_fr, text= "expenses",width= 30, anchor= "w", command=show_expenses)
+income_button = tk.Button (navigation_fr, text= "income",width= 30, anchor= "w" , command= show_income)
+subscription_button = tk.Button (navigation_fr, text= "subscription",width= 30, anchor= "w", command=show_subscription)
 
 # Navigation position
 overview_button.grid (row= 0 , column= 0 , padx=5 , pady= 5, sticky="w")
@@ -144,15 +159,23 @@ income_button.grid (row= 0 , column= 3 , padx=5 , pady= 5, sticky="w")
 subscription_button.grid (row= 0 , column= 4 , padx=5 , pady= 5, sticky="w")
 
 # =========================
+# Content Frame
+# =========================
+basic_fr= tk.Frame (dashboard_fr, width=1200 , height=650,bg= "black")
+basic_fr.pack_propagate(False)
+basic_fr.pack(fill= "both", expand=True)
+
+# =========================
 # Overview Frame
 # =========================
 
-overview_fr= tk.Frame (dashboard_fr, width=1200 , height=650)
-overview_fr.pack_propagate(False)
-overview_fr.pack(fill= "both", expand=True)
-overview_fr.columnconfigure(0,weight=1,uniform="group1")
-overview_fr.columnconfigure(1,weight=1,uniform="group1")
+overview_fr= tk.Frame (basic_fr, width=1200 , height=650 , bg="purple")
+overview_fr.grid_propagate(False)
+overview_fr.grid(row=0, column=0, sticky="nsew")
+overview_fr.columnconfigure(0,weight=3,uniform="group1")
+overview_fr.columnconfigure(1,weight=2,uniform="group1")
 overview_fr.rowconfigure(0, weight=1)
+overview_fr.tkraise()
 
 left_side_fr=tk.Frame(overview_fr)
 left_side_fr.grid(row=0, column=0, sticky="nsew")
@@ -204,4 +227,30 @@ right_side_fr.grid_columnconfigure(0, weight=1)
 chart_placeholder = tk.Label(right_side_fr, text="Future Chart Here")
 chart_placeholder.pack(expand=True)
 
+# =========================
+# Account Frame
+# =========================
+account_fr= tk.Frame (basic_fr, width=1200 , height=650 , bg="yellow")
+account_fr.grid_propagate(False)
+account_fr.grid(row=0, column=0, sticky="nsew")
+# =========================
+# expenses Frame
+# =========================
+expenses_fr= tk.Frame (basic_fr, width=1200 , height=650 , bg="red")
+expenses_fr.grid_propagate(False)
+expenses_fr.grid(row=0, column=0, sticky="nsew")
+# =========================
+# income Frame
+# =========================
+income_fr= tk.Frame (basic_fr, width=1200 , height=650 , bg="blue")
+income_fr.grid_propagate(False)
+income_fr.grid(row=0, column=0, sticky="nsew")
+# =========================
+# subscription Frame
+# =========================
+subscription_fr= tk.Frame (basic_fr, width=1200 , height=650 , bg="green")
+subscription_fr.grid_propagate(False)
+subscription_fr.grid(row=0, column=0, sticky="nsew")
+
+show_overview()
 main.mainloop()
