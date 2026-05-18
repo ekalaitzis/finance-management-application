@@ -27,7 +27,7 @@ class Member:
 
         return m1 + m2 + m3
 
-    def createMember(self):            # method to add user to the db
+    def createMember(self):                             # method to add user to the db
         try:
             with conn:
                 cursor.execute("INSERT INTO member (first_name, last_name, username, password) VALUES (?,?,?,?)",
@@ -37,30 +37,33 @@ class Member:
             conn.commit()
             passw = "*" * len(self.password)
             print(f"Added member to the DB. Welcome {self.firstName}, {self.lastName} with username {self.username} and password {passw}.")
-            return True         # If the addition was succesfull display a message like the above
+            return True                                 # If the addition was succesfull display a message like the above
         except sqlite3.IntegrityError:
-            print("This action is restricted, check if all the fields are valid and try again.")
-            return False         # If the addition was not succesfull display an error message, this is if the user already exists or a null value is given
+            print("Member:This action is restricted, check if all the fields are valid and try again.")
+            return False                                # If the addition was not succesfull display an error message, this is if the user already exists or a null value is given
 
-    def getMemberByMemberId(memberId):
+    def getMemberByMemberId(memberId):                  # method to add user to the db
         cursor.execute("SELECT * FROM member WHERE member_id=:member_id", {'member_id': memberId})
         row = cursor.fetchone()
         member = Member(row[1], row[2], row[3], row[4], row[0])
         return member
     
-    def getMemberUsername(self):
+    def getAllMembers():                                # method to get all members from the db
+        cursor.execute("SELECT * FROM member")
+        row = cursor.fetchall()
+        for member in row:
+            print(member)
+        return row
+
+    def updateMemberByid():                             # method to edit a member in the db
+        pass
+
+    def deleteMemberByid():                             # method to delete a member from the db
+        pass    
+
+    def getMemberUsername(self):                        ## temp, to be deleted
         return self.username
     
-    def getAllMembers():
-        pass
-
-    def updateMemberByid():
-        pass
-
-    def deleteMemberByid():
-        pass
-
-
 class Category:
     def __init__(self, categoryName, memberId, categoryId= None):
         self.categoryId = categoryId
@@ -72,26 +75,26 @@ class Category:
         c2 = "Member Id:" + str(self.memberId)
         return c1 + c2
 
-    def addDefaultCategories(self):          # method to add to the default categries to the db
+    def addDefaultCategories(self):                     # method to add to the default categries to the db
+        user = Member.getMemberUsername(self)
         try:
             with conn:
                 for category in DEFAULT_CATEGORIES:
                     cursor.execute("INSERT INTO category (category_name,member_id) VALUES (?,?)",
                 (category, self.memberId))
-            user = Member.getMemberUsername(self)
             print(f"Added the default categories to {user}.")
             return True
         except sqlite3.IntegrityError:
-            print("This action is restricted, check if all the fields are valid and try again.")
+            print("Category:This action is restricted, check if all the fields are valid and try again.")
             return False
 
-    def createCategory(self, member):               #method to add new category to a user
+    def createCategoryByMemberId(self, memberId):                   #method to add new category to a member
+        member = Member.getMemberByMemberId(memberId)
         user = member.username
-        print(str(member.memberId) + " = member id " + str(user) + " = username")
         try:
             with conn:
                 cursor.execute("INSERT INTO category (category_name,member_id) VALUES (?,?)",
-            (self.categoryName, member.memberId))
+            (self.categoryName, memberId))
             print(f"Added the {self.categoryName} category to {user}.")
             conn.commit()
             return True
@@ -99,7 +102,7 @@ class Category:
             print("This action is restricted, check if all the fields are valid and try again.")
             return False
         
-    def getCategoriesByMemberId(memberId):
+    def getAllCategoriesByMemberId(memberId):           # method to get all categories of a member from the db
         member = Member.getMemberByMemberId(memberId)
         user = member.username
         try:
@@ -112,13 +115,10 @@ class Category:
             print("This action is restricted, check if all the fields are valid and try again.")
             return False
 
-    def getAllCategoriesByMemberId():
+    def UpdateCategoryByCategoryId():                   # method to edit a category of a member from the db
         pass
-    def UpdateCategoryByCategoryId():
-        pass
-    def getAllCategoriesByMemberId():
-        pass
-    def deleteCategoryByCategoryId():
+
+    def deleteCategoryByCategoryId():                   # method to delete a category of a member from the db
         pass
         
 class Transaction:
@@ -138,33 +138,42 @@ class Transaction:
         t5 = "Category Id:" + str(self.categoryId)
         return t1 + t2 + t3 + t4 + t5
 
-    def createTransaction():
+    def createTransaction():                            #method to add new transaction to a member
         pass
-    def getAllTransactionsByMemberId():
+    def getAllTransactionsByMemberId():                 # method to get all transactions of a member from the db
         pass
-    def UpdateTransactionByTransactionId():
+    def UpdateTransactionByTransactionId():             # method to edit a transaction of a member from the db
         pass
-    def deleteTransactionByTransactionId():
+    def deleteTransactionByTransactionId():             # method to delete a transaction of a member from the db
         pass
         
-def menu(self):
+def menu():
         while True:
             print("\n=== Διαχείριση Φοιτητών ===")
             print("1. Add a new Member")
-            print("2. Show Members")
+            print("2. Show all Members")
             print("3. Update Member")
             print("4. Delete Member")
-
             print("5. Add Category to Member")
             print("6. Show all Categories of a Member")
-            print("7. Update a category of a Member")
-            print("8. Delete a category of a Member")
+            print("7. Update a Category of a Member")
+            print("8. Delete a Category of a Member")
+            print("11. Add Transaction to Member")
+            print("12. Show all Transactions of a Member")
+            print("13. Update a Transaction of a Member")
+            print("14. Delete a Transaction of a Member")
 
             print("0. Έξοδος")
             choice = input("Επιλέξτε μια ενέργεια: ")
 
             if choice == '1':
-                Member.createMember()
+                name = input("First name? ")
+                lastName = input("Last name? ")
+                username = input("username? ")
+                password = input("Password? ")
+                
+                m1 = Member(name, lastName, username, password)
+                m1.createMember()
             elif choice == '2':
                 Member.getAllMembers()
             elif choice == '3':
@@ -172,22 +181,26 @@ def menu(self):
             elif choice == '4':
                 Member.deleteMemberByid()
 
-            elif choice == '5':     
-                Category.createCategory()
-            elif choice == '6':     
-                Category.getAllCategoriesByMemberId()
-            elif choice == '7':     
+            elif choice == '5':
+                cat = input("Insert category name: ")
+                id = int(input("Insert member id: "))
+                c1 = Category(cat, id)
+                c1.createCategoryByMemberId(id)
+            elif choice == '6':
+                id = int(input("Select member id:"))
+                Category.getAllCategoriesByMemberId(id)
+            elif choice == '7':
                Category.UpdateCategoryByCategoryId()
-            elif choice == '8':     
+            elif choice == '8':
                 Category.deleteCategoryByCategoryId()
 
-            elif choice == '11':     
+            elif choice == '11':
                 Transaction.createTransaction()
-            elif choice == '12':     
+            elif choice == '12':
                 Transaction.getAllTransactionsByMemberId()
-            elif choice == '13':     
+            elif choice == '13':
                Transaction.UpdateTransactionByTransactionId()
-            elif choice == '14':     
+            elif choice == '14':
                 Transaction.deleteTransactionByTransactionId()
             
             elif choice == '0':
@@ -197,12 +210,12 @@ def menu(self):
 def main():
     menu()
 
-    m1 = Member("George", "Tsoukalas", "Gtsouk3", "secret")
-    m1.createMember()
-    c1 = Category("Temporary", m1.memberId)
-    c1.createCategory(m1)
-    print("Hello")
-    Category.getCategoriesByMemberId(m1.memberId)
+    # m1 = Member("George", "Tsoukalas", "Gtsouk3", "secret")
+    # m1.createMember()
+    # c1 = Category("Temporary", m1.memberId)
+    # c1.createCategory(m1)
+    # print("Hello")
+    # Category.getCategoriesByMemberId(m1.memberId)
 
 if __name__ == "__main__":
     main()
