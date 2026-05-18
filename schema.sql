@@ -18,7 +18,7 @@ CREATE TABLE category
     member_id           INTEGER NOT NULL,
     CONSTRAINT fk_member
         FOREIGN KEY (member_id)
-            REFERENCES member (id)
+            REFERENCES member (member_id)
             ON DELETE CASCADE
 );
 
@@ -31,6 +31,6 @@ CREATE TABLE "transaction"
     date                TEXT NOT NULL,
     category_id         INTEGER NOT NULL,
         FOREIGN KEY (category_id)
-            REFERENCES category (id)
+            REFERENCES category (category_id)
             ON DELETE CASCADE
 );
