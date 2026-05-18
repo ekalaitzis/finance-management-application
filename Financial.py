@@ -42,7 +42,7 @@ class Member:
             print("This action is restricted, check if all the fields are valid and try again.")
             return False         # If the addition was not succesfull display an error message, this is if the user already exists or a null value is given
 
-    def getMemberById(memberId):
+    def getMemberByMemberId(memberId):
         cursor.execute("SELECT * FROM member WHERE member_id=:member_id", {'member_id': memberId})
         row = cursor.fetchone()
         member = Member(row[1], row[2], row[3], row[4], row[0])
