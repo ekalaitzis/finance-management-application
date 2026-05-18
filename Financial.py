@@ -27,7 +27,7 @@ class Member:
 
         return m1 + m2 + m3
 
-    def addMember(self):            # method to add user to the db
+    def createMember(self):            # method to add user to the db
         try:
             with conn:
                 cursor.execute("INSERT INTO member (first_name, last_name, username, password) VALUES (?,?,?,?)",
@@ -50,6 +50,16 @@ class Member:
     
     def getMemberUsername(self):
         return self.username
+    
+    def getAllMembers():
+        pass
+
+    def updateMemberByid():
+        pass
+
+    def deleteMemberByid():
+        pass
+
 
 class Category:
     def __init__(self, categoryName, memberId, categoryId= None):
@@ -75,7 +85,7 @@ class Category:
             print("This action is restricted, check if all the fields are valid and try again.")
             return False
 
-    def addNewCategory(self, member):               #method to add new category to a user
+    def createCategory(self, member):               #method to add new category to a user
         user = member.username
         print(str(member.memberId) + " = member id " + str(user) + " = username")
         try:
@@ -90,7 +100,7 @@ class Category:
             return False
         
     def getCategoriesByMemberId(memberId):
-        member = Member.getMemberById(memberId)
+        member = Member.getMemberByMemberId(memberId)
         user = member.username
         try:
             with conn:
@@ -102,7 +112,14 @@ class Category:
             print("This action is restricted, check if all the fields are valid and try again.")
             return False
 
-
+    def getAllCategoriesByMemberId():
+        pass
+    def UpdateCategoryByCategoryId():
+        pass
+    def getAllCategoriesByMemberId():
+        pass
+    def deleteCategoryByCategoryId():
+        pass
         
 class Transaction:
     def __init__(self, transactionName, transactionType, amount, date, categoryId, transactionId=None):
@@ -121,12 +138,69 @@ class Transaction:
         t5 = "Category Id:" + str(self.categoryId)
         return t1 + t2 + t3 + t4 + t5
 
+    def createTransaction():
+        pass
+    def getAllTransactionsByMemberId():
+        pass
+    def UpdateTransactionByTransactionId():
+        pass
+    def deleteTransactionByTransactionId():
+        pass
+        
+def menu(self):
+        while True:
+            print("\n=== Διαχείριση Φοιτητών ===")
+            print("1. Add a new Member")
+            print("2. Show Members")
+            print("3. Update Member")
+            print("4. Delete Member")
+
+            print("5. Add Category to Member")
+            print("6. Show all Categories of a Member")
+            print("7. Update a category of a Member")
+            print("8. Delete a category of a Member")
+
+            print("0. Έξοδος")
+            choice = input("Επιλέξτε μια ενέργεια: ")
+
+            if choice == '1':
+                Member.createMember()
+            elif choice == '2':
+                Member.getAllMembers()
+            elif choice == '3':
+                Member.updateMemberByid()
+            elif choice == '4':
+                Member.deleteMemberByid()
+
+            elif choice == '5':     
+                Category.createCategory()
+            elif choice == '6':     
+                Category.getAllCategoriesByMemberId()
+            elif choice == '7':     
+               Category.UpdateCategoryByCategoryId()
+            elif choice == '8':     
+                Category.deleteCategoryByCategoryId()
+
+            elif choice == '11':     
+                Transaction.createTransaction()
+            elif choice == '12':     
+                Transaction.getAllTransactionsByMemberId()
+            elif choice == '13':     
+               Transaction.UpdateTransactionByTransactionId()
+            elif choice == '14':     
+                Transaction.deleteTransactionByTransactionId()
+            
+            elif choice == '0':
+                print("Bye!")
+                break
+
 def main():
+    menu()
 
     m1 = Member("George", "Tsoukalas", "Gtsouk3", "secret")
-    m1.addMember()
+    m1.createMember()
     c1 = Category("Temporary", m1.memberId)
-    c1.addNewCategory(m1)
+    c1.createCategory(m1)
     print("Hello")
     Category.getCategoriesByMemberId(m1.memberId)
 
