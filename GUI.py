@@ -37,8 +37,6 @@ def show_expenses():
 def show_subscription():
     subscription_fr.tkraise()
 
-def new_registration():
-    print (str(first_name) + " " + str(last_name) + " " + str(username_new) + " " +  str(password_new) + " " +  str(password_new2) )
 
 # =========================
 # Main Window
