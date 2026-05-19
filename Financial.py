@@ -70,8 +70,20 @@ class Member:
             print("Member:This action is restricted, check if all the fields are valid and try again.")
             return False
 
-    def deleteMemberByid():                             # method to delete a member from the db
-        pass    
+    def deleteMemberByid(memberId):                             # method to delete a member from the db
+        tempMember = Member.getMemberByMemberId(memberId)
+        if tempMember == None:                                  # no member found to be deleted
+            print(f"No member found with id: {memberId}.")
+            return False
+        else:
+            with conn:
+                cursor.execute("DELETE FROM member WHERE member_id=:member_id", {'member_id': memberId})
+            if Member.getMemberByMemberId(memberId) == None:    #check if deleted
+                print(f"User: {tempMember.username} deleted.")
+                return True
+            else:
+                print("Failed to delete")                       
+                return False
 
     def getMemberUsername(self):                        ## temp, to be deleted
         return self.username
