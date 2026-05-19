@@ -34,7 +34,6 @@ class Member:
                 (self.firstName, self.lastName, self.username, self.password))
             self.memberId = cursor.lastrowid
             Category.addDefaultCategories(self)         # on creation of a user add the default categries
-            conn.commit()
             passw = "*" * len(self.password)
             print(f"Added member to the DB. Welcome {self.firstName}, {self.lastName} with username {self.username} and password {passw}.")
             return True                                 # If the addition was succesfull display a message like the above
@@ -43,10 +42,13 @@ class Member:
             return False                                # If the addition was not succesfull display an error message, this is if the user already exists or a null value is given
 
     def getMemberByMemberId(memberId):                  # method to add user to the db
-        cursor.execute("SELECT * FROM member WHERE member_id=:member_id", {'member_id': memberId})
+        with conn:
+            cursor.execute("SELECT * FROM member WHERE member_id=:member_id", {'member_id': memberId})
         row = cursor.fetchone()
-        member = Member(row[1], row[2], row[3], row[4], row[0])
-        return member
+        if row == None:
+            print(f"No member found with id: {memberId}.")
+            return None
+        return Member(row[1], row[2], row[3], row[4], row[0])
     
     def getAllMembers():                                # method to get all members from the db
         cursor.execute("SELECT * FROM member")
@@ -55,8 +57,18 @@ class Member:
             print(member)
         return row
 
-    def updateMemberByid():                             # method to edit a member in the db
-        pass
+    def updateMemberByid(memberId,updatedMember):                             # method to edit a member in the db
+        currMember = Member.getMemberByMemberId(memberId)
+        try:
+            with conn:
+                cursor.execute("UPDATE member SET first_name=:firstName, last_name=:lastName, password=:password WHERE member_id=:memberId",
+                {'firstName':updatedMember.firstName, 'lastName':updatedMember.lastName, 'password':updatedMember.password, "memberId":currMember.memberId})
+            passw = "*" * len(updatedMember.password)
+            print(f"Updated member:{currMember.username} {currMember.firstName}, {currMember.lastName} with password {passw}.")
+            return True                                
+        except sqlite3.IntegrityError:
+            print("Member:This action is restricted, check if all the fields are valid and try again.")
+            return False
 
     def deleteMemberByid():                             # method to delete a member from the db
         pass    
@@ -207,8 +219,12 @@ def menu():
             elif choice == '2':
                 Member.getAllMembers()
             elif choice == '3':
-                id = int(input("Select member id:"))
-                Member.updateMemberByid(id)
+                id = int(input("Select member id to update:"))
+                name = input("New first name? ")
+                lastName = input("New last name? ")
+                password = input("New password? ")
+                tempMember = Member(name, lastName, "temp", password)
+                Member.updateMemberByid(id,tempMember)
             elif choice == '4':
                 id = int(input("Select member id:"))
                 Member.deleteMemberByid(id)
