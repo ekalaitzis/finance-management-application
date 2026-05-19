@@ -57,7 +57,7 @@ class Member:
             print(member)
         return row
 
-    def updateMemberByid(memberId,updatedMember):                             # method to edit a member in the db
+    def updateMemberByMemberId(memberId,updatedMember):                             # method to edit a member in the db
         currMember = Member.getMemberByMemberId(memberId)
         try:
             with conn:
@@ -70,7 +70,7 @@ class Member:
             print("Member:This action is restricted, check if all the fields are valid and try again.")
             return False
 
-    def deleteMemberByid(memberId):                             # method to delete a member from the db
+    def deleteMemberByMemberId(memberId):                             # method to delete a member from the db
         tempMember = Member.getMemberByMemberId(memberId)
         if tempMember == None:                                  # no member found to be deleted
             print(f"No member found with id: {memberId}.")
@@ -157,9 +157,30 @@ class Category:
         except sqlite3.IntegrityError:
             print("This action is restricted, check if all the fields are valid and try again.")
             return False
+ 
+    def getCategoryByCategoryId(categoryId):
+        with conn:
+            cursor.execute("SELECT * FROM category WHERE category_id=:categoryId", {"categoryId":categoryId})
+        row = cursor.fetchone()
+        if row == None:
+            print(f"No category found with id: {categoryId}.")
+            return None
+        else:
+            print(Category(row[1], row[2], row[0]))
+            return Category(row[1], row[2], row[0])
 
-    def UpdateCategoryByCategoryId():                   # method to edit a category of a member from the db
-        pass
+
+    def UpdateCategoryByCategoryId(categoryId,updatedCategory):                   # method to edit a category of a member from the db
+        currCategory = Category.getCategoryByCategoryId(categoryId)
+        try:
+            with conn:
+                cursor.execute("UPDATE category SET category_name=:categoryName WHERE category_id=:categoryId",
+                {'categoryName':updatedCategory.categoryName, "categoryId":currCategory.categoryId})
+            print(f"Updated category name to:{currCategory.categoryName}.")
+            return True                                
+        except sqlite3.IntegrityError:
+            print("Category:This action is restricted, check if all the fields are valid and try again.")
+            return False
 
     def deleteCategoryByCategoryId():                   # method to delete a category of a member from the db
         pass
@@ -250,7 +271,10 @@ def menu():
                 id = int(input("Select member id:"))
                 Category.getAllCategoriesByMemberId(id)
             elif choice == '7':
-               Category.UpdateCategoryByCategoryId()
+                id = int(input("Select category id to update:"))
+                name = input("New categoryy name? ")
+                tempCategory = Category(name, 1)
+                Category.UpdateCategoryByCategoryId(id,tempCategory)
             elif choice == '8':
                 Category.deleteCategoryByCategoryId()
 
