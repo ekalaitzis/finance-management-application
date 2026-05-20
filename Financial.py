@@ -250,6 +250,22 @@ class Transaction:
             print(Transaction(row[1], row[2], row[3], row[4], row[5], row[0]))
             return Transaction(row[1], row[2], row[3], row[4], row[5], row[0])
         
+    def getAllTransactionsByMemberId(memberId):
+        tempMember = Member.getMemberByMemberId(memberId)
+        if tempMember == None:
+            return False
+        else:
+            user = tempMember.username
+            try:
+                with conn:
+                    cursor.execute('SELECT "transaction".transaction_name, "transaction".transaction_type, "transaction".amount, "transaction".transaction_date, category.category_name FROM "transaction" JOIN category ON "transaction".category_id = category.category_id WHERE category.member_id=:member_id', {'member_id': memberId})
+                transactions = cursor.fetchall()
+                print(f"Here are the transactions of the {user}. \n {transactions}")
+                return True
+            except sqlite3.IntegrityError:
+                print("This action is restricted, check if all the fields are valid and try again.")
+                return False
+
     def getAllTransactionsByCategoryId(categoryId):                 # method to get all transactions of a member from the db
         tempCategory = Category.getCategoryByCategoryId(categoryId)
         if tempCategory == None:
@@ -359,6 +375,9 @@ def menu():
             elif choice == '14':
                 id = int(input("Select transaction id to delete:"))
                 Transaction.deleteTransactionByTransactionId(id)
+            elif choice == '15':
+                id = int(input("Select member id:"))
+                Transaction.getAllTransactionsByMemberId(id)
             
             elif choice == '0':
                 print("Bye!")
