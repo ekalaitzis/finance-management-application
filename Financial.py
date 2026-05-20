@@ -297,7 +297,23 @@ class Transaction:
             else:
                 print("Failed to delete")                       
                 return False
-        
+    
+    def getAllTransactionsByMemberIdFilterByType(memberId,transactionType):     #This method can be used to get all the expenses or income of a user
+        tempMember = Member.getMemberByMemberId(memberId)
+        if tempMember == None:
+            return False
+        else:
+            user = tempMember.username
+            try:
+                with conn:
+                    cursor.execute('SELECT "transaction".transaction_name, "transaction".amount, "transaction".transaction_date, category.category_name FROM "transaction" JOIN category ON "transaction".category_id = category.category_id WHERE category.member_id=:member_id AND "transaction".transaction_type =:transaction_type', {'member_id': memberId,'transaction_type':transactionType})
+                transactions = cursor.fetchall()
+                print(f"Here are the {transactionType} transactions of the {user}. \n {transactions}")
+                return True
+            except sqlite3.IntegrityError:
+                print("This action is restricted, check if all the fields are valid and try again.")
+                return False
+
 def menu():
         while True:
             print("\n=== Διαχείριση Φοιτητών ===")
@@ -378,6 +394,15 @@ def menu():
             elif choice == '15':
                 id = int(input("Select member id:"))
                 Transaction.getAllTransactionsByMemberId(id)
+            elif choice == '16':
+                id = int(input("Select member id:"))
+                type = int(input("Transaction type? 1 for income, 0 for expense."))
+                if type == 1:
+                    transactionType = "INCOME"
+                else:
+                    transactionType = "EXPENSE"
+                Transaction.getAllTransactionsByMemberIdFilterByType(id,transactionType)
+
             
             elif choice == '0':
                 print("Bye!")
