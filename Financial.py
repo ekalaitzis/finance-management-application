@@ -239,24 +239,48 @@ class Transaction:
                 print("This action is restricted, check if all the fields are valid and try again.")
                 return False
 
-    def getAllTransactionsByMemberId(self, memberId):                 # method to get all transactions of a member from the db
-        member = Member.getMemberByMemberId(memberId)
-        user = member.username
-        try:
-            with conn:
-                cursor.execute("SELECT * FROM transaction WHERE member_id=:member_id", {'member_id': memberId})
-            transactions = cursor.fetchall()
-            print(f"Here are the transactions of the {user}. \n {transactions}")
-            return True
-        except sqlite3.IntegrityError:
-            print("This action is restricted, check if all the fields are valid and try again.")
+    def getTransactionByTransactionId(transactionId):
+        with conn:
+            cursor.execute('SELECT * FROM "transaction" WHERE transaction_id=:transactionId', {"transactionId":transactionId})
+        row = cursor.fetchone()
+        if row == None:
+            print(f"No category found with id: {transactionId}.")
+            return None
+        else:
+            print(Transaction(row[1], row[2], row[3], row[4], row[5], row[0]))
+            return Transaction(row[1], row[2], row[3], row[4], row[5], row[0])
+        
+    def getAllTransactionsByCategoryId(categoryId):                 # method to get all transactions of a member from the db
+        tempCategory = Category.getCategoryByCategoryId(categoryId)
+        if tempCategory == None:
             return False
+        else:    
+            try:
+                with conn:
+                    cursor.execute('SELECT * FROM "transaction" WHERE category_id=:category_id', {'category_id': categoryId})
+                transactions = cursor.fetchall()
+                print(f"Here are the transactions of the {tempCategory.categoryName}. \n {transactions}")
+                return True
+            except sqlite3.IntegrityError:
+                print("This action is restricted, check if all the fields are valid and try again.")
+                return False
         
     def UpdateTransactionByTransactionId():             # method to edit a transaction of a member from the db
         pass
 
-    def deleteTransactionByTransactionId():             # method to delete a transaction of a member from the db
-        pass
+    def deleteTransactionByTransactionId(transactionId):             # method to delete a transaction of a member from the db
+        tempTransaction = Transaction.getTransactionByTransactionId(transactionId)
+        if tempTransaction == None:                                  # no category found to be deleted
+            return False
+        else:
+            with conn:
+                cursor.execute('DELETE FROM "transaction" WHERE transaction_id=:transactionId', {'transactionId': transactionId})
+            if Transaction.getTransactionByTransactionId(transactionId) == None:    #check if deleted
+                print(f"Transaction: {tempTransaction.transactionName} deleted.")
+                return True
+            else:
+                print("Failed to delete")                       
+                return False
         
 def menu():
         while True:
@@ -270,9 +294,9 @@ def menu():
             print("7. Update a Category of a Member")
             print("8. Delete a Category of a Member")
             print("11. Add Transaction to Member")
-            print("12. Show all Transactions of a Member")
-            print("13. Update a Transaction of a Member")
-            print("14. Delete a Transaction of a Member")
+            print("12. Show all Transactions of a Category")
+            print("13. Update a Transaction")
+            print("14. Delete a Transaction")
 
             print("0. Έξοδος")
             choice = input("Επιλέξτε μια ενέργεια: ")
@@ -282,7 +306,6 @@ def menu():
                 lastName = input("Last name? ")
                 username = input("username? ")
                 password = input("Password? ")
-                
                 m1 = Member(name, lastName, username, password)
                 m1.createMember()
             elif choice == '2':
@@ -314,6 +337,7 @@ def menu():
             elif choice == '8':
                 id = int(input("Select category id to delete:"))
                 Category.deleteCategoryByCategoryId(id)
+
             elif choice == '11':
                 name = input("Transaction name? ")
                 type = int(input("Transaction type? 1 for income, 0 for expense."))
@@ -327,12 +351,14 @@ def menu():
                 t1 = Transaction(name, transactionType, amount, currentDateTime, catId)
                 t1.createTransactionByCategoryId(catId)
             elif choice == '12':
-                id = int(input("Select member id:"))
-                Transaction.getAllTransactionsByMemberId(id)
+                id = int(input("Select category id:"))
+                Transaction.getAllTransactionsByCategoryId(id)
             elif choice == '13':
-               Transaction.UpdateTransactionByTransactionId()
+                id = int(input("Select transaction id to update:"))
+                Transaction.UpdateTransactionByTransactionId(id)
             elif choice == '14':
-                Transaction.deleteTransactionByTransactionId()
+                id = int(input("Select transaction id to delete:"))
+                Transaction.deleteTransactionByTransactionId(id)
             
             elif choice == '0':
                 print("Bye!")
@@ -340,13 +366,6 @@ def menu():
 
 def main():
     menu()
-
-    # m1 = Member("George", "Tsoukalas", "Gtsouk3", "secret")
-    # m1.createMember()
-    # c1 = Category("Temporary", m1.memberId)
-    # c1.createCategory(m1)
-    # print("Hello")
-    # Category.getCategoriesByMemberId(m1.memberId)
 
 if __name__ == "__main__":
     main()
