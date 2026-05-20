@@ -182,8 +182,21 @@ class Category:
             print("Category:This action is restricted, check if all the fields are valid and try again.")
             return False
 
-    def deleteCategoryByCategoryId():                   # method to delete a category of a member from the db
-        pass
+    def deleteCategoryByCategoryId(categoryId):                   # method to delete a category of a member from the db
+        tempCategory = Category.getCategoryByCategoryId(categoryId)
+        if tempCategory == None:                                  # no category found to be deleted
+            print(f"No category found with id: {categoryId}.")
+            return False
+        else:
+            with conn:
+                cursor.execute("DELETE FROM category WHERE category_id=:category_id", {'category_id': categoryId})
+            if Category.getCategoryByCategoryId(categoryId) == None:    #check if deleted
+                print(f"Category: {tempCategory.categoryName} deleted.")
+                return True
+            else:
+                print("Failed to delete")                       
+                return False
+
         
 class Transaction:
     def __init__(self, transactionName, transactionType, amount, date, categoryId, transactionId=None):
