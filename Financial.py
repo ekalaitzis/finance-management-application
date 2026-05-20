@@ -73,7 +73,6 @@ class Member:
     def deleteMemberByMemberId(memberId):                             # method to delete a member from the db
         tempMember = Member.getMemberByMemberId(memberId)
         if tempMember == None:                                  # no member found to be deleted
-            print(f"No member found with id: {memberId}.")
             return False
         else:
             with conn:
@@ -100,7 +99,7 @@ class Member:
     def validateMember(username, password):             # method to validate a username and password against the DB records,use for login
         member = Member.getMemberByUsername(username)
         if member == None:
-            print(f"{username} was not found in the database")
+            print(f"{username} was not found in the database.")
             return False
         if member[4] == password:
             return True
@@ -132,19 +131,21 @@ class Category:
             return False
 
     def createCategoryByMemberId(self, memberId):                   #method to add new category to a member
-        member = Member.getMemberByMemberId(memberId)
-        user = member.username
-        try:
-            with conn:
-                cursor.execute("INSERT INTO category (category_name,member_id) VALUES (?,?)",
-            (self.categoryName, memberId))
-            print(f"Added the {self.categoryName} category to {user}.")
-            conn.commit()
-            return True
-        except sqlite3.IntegrityError:
-            print("This action is restricted, check if all the fields are valid and try again.")
+        tempMember = Member.getMemberByMemberId(memberId)
+        if tempMember == None:
             return False
-        
+        else:
+            try:
+                with conn:
+                    cursor.execute("INSERT INTO category (category_name,member_id) VALUES (?,?)",
+                (self.categoryName, memberId))
+                print(f"Added the {self.categoryName} category to {tempMember.username}.")
+                conn.commit()
+                return True
+            except sqlite3.IntegrityError:
+                print("This action is restricted, check if all the fields are valid and try again.")
+                return False
+            
     def getAllCategoriesByMemberId(memberId):           # method to get all categories of a member from the db
         member = Member.getMemberByMemberId(memberId)
         user = member.username
@@ -169,7 +170,6 @@ class Category:
             print(Category(row[1], row[2], row[0]))
             return Category(row[1], row[2], row[0])
 
-
     def UpdateCategoryByCategoryId(categoryId,updatedCategory):                   # method to edit a category of a member from the db
         currCategory = Category.getCategoryByCategoryId(categoryId)
         try:
@@ -185,7 +185,6 @@ class Category:
     def deleteCategoryByCategoryId(categoryId):                   # method to delete a category of a member from the db
         tempCategory = Category.getCategoryByCategoryId(categoryId)
         if tempCategory == None:                                  # no category found to be deleted
-            print(f"No category found with id: {categoryId}.")
             return False
         else:
             with conn:
@@ -215,7 +214,7 @@ class Transaction:
         t5 = "Category Id:" + str(self.categoryId)
         return t1 + t2 + t3 + t4 + t5
 
-    def createTransaction():                            #method to add new transaction to a member
+    def createTransactionByCategoryId(categoryId):                            #method to add new transaction to a member
         pass
     def getAllTransactionsByMemberId(self, memberId):                 # method to get all transactions of a member from the db
         member = Member.getMemberByMemberId(memberId)
@@ -289,8 +288,8 @@ def menu():
                 tempCategory = Category(name, 1)
                 Category.UpdateCategoryByCategoryId(id,tempCategory)
             elif choice == '8':
-                Category.deleteCategoryByCategoryId()
-
+                id = int(input("Select category id to delete:"))
+                Category.deleteCategoryByCategoryId(id)
             elif choice == '11':
                 Transaction.createTransaction()
             elif choice == '12':
