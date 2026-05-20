@@ -1,4 +1,7 @@
 import sqlite3
+import datetime
+
+currentDateTime = datetime.datetime.now()
 
 DEFAULT_CATEGORIES = [
     "Groceries", "Shopping", "Restaurants", "Transportation",
@@ -8,7 +11,7 @@ DEFAULT_CATEGORIES = [
 ]
 
 
-conn = sqlite3.connect('Finance.db')
+conn = sqlite3.connect('Finance.db', detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
 cursor = conn.cursor()
 
     
@@ -147,17 +150,20 @@ class Category:
                 return False
             
     def getAllCategoriesByMemberId(memberId):           # method to get all categories of a member from the db
-        member = Member.getMemberByMemberId(memberId)
-        user = member.username
-        try:
-            with conn:
-                cursor.execute("SELECT * FROM category WHERE member_id=:member_id", {'member_id': memberId})
-            categories = cursor.fetchall()
-            print(f"Here are the categories of the {user}. \n {categories}")
-            return True
-        except sqlite3.IntegrityError:
-            print("This action is restricted, check if all the fields are valid and try again.")
+        tempMember = Member.getMemberByMemberId(memberId)
+        if tempMember == None:
             return False
+        else:
+            user = tempMember.username
+            try:
+                with conn:
+                    cursor.execute("SELECT * FROM category WHERE member_id=:member_id", {'member_id': memberId})
+                categories = cursor.fetchall()
+                print(f"Here are the categories of the {user}. \n {categories}")
+                return True
+            except sqlite3.IntegrityError:
+                print("This action is restricted, check if all the fields are valid and try again.")
+                return False
  
     def getCategoryByCategoryId(categoryId):
         with conn:
@@ -214,8 +220,25 @@ class Transaction:
         t5 = "Category Id:" + str(self.categoryId)
         return t1 + t2 + t3 + t4 + t5
 
-    def createTransactionByCategoryId(categoryId):                            #method to add new transaction to a member
-        pass
+    def createTransactionByCategoryId(self, categoryId):                            #method to add new transaction to a member
+        tempCategory = Category.getCategoryByCategoryId(categoryId)
+        if tempCategory == None:
+            return False
+        else:
+            try:
+                with conn:
+                    cursor.execute('INSERT INTO "transaction" (transaction_name, transaction_type, amount, transaction_date, category_id) VALUES (?, ?, ?, ?, ?)',
+                                   (self.transactionName, self.transactionType ,self.amount ,self.date ,categoryId))
+                    print(f"Transaction added! \n{self.transactionName} \n{self.transactionType}\n{self.amount}\n{self.date}\nto:\n{tempCategory}")
+                    conn.commit()
+                    return True
+            except sqlite3.IntegrityError:
+                print("This action is restricted, check if all the fields are valid and try again.")
+                return False
+            except sqlite3.OperationalError:
+                print("This action is restricted, check if all the fields are valid and try again.")
+                return False
+
     def getAllTransactionsByMemberId(self, memberId):                 # method to get all transactions of a member from the db
         member = Member.getMemberByMemberId(memberId)
         user = member.username
@@ -231,6 +254,7 @@ class Transaction:
         
     def UpdateTransactionByTransactionId():             # method to edit a transaction of a member from the db
         pass
+
     def deleteTransactionByTransactionId():             # method to delete a transaction of a member from the db
         pass
         
@@ -291,7 +315,17 @@ def menu():
                 id = int(input("Select category id to delete:"))
                 Category.deleteCategoryByCategoryId(id)
             elif choice == '11':
-                Transaction.createTransaction()
+                name = input("Transaction name? ")
+                type = int(input("Transaction type? 1 for income, 0 for expense."))
+                if type == 1:
+                    transactionType = "INCOME"
+                else:
+                    transactionType = "EXPENSE"
+                amount = int(input("Amount of transaction? "))
+                catId = input("Category id of the transaction? ")
+                
+                t1 = Transaction(name, transactionType, amount, currentDateTime, catId)
+                t1.createTransactionByCategoryId(catId)
             elif choice == '12':
                 id = int(input("Select member id:"))
                 Transaction.getAllTransactionsByMemberId(id)
