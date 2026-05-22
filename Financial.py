@@ -14,7 +14,6 @@ DEFAULT_CATEGORIES = [
 conn = sqlite3.connect('Finance.db', detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
 cursor = conn.cursor()
 
-    
 class Member:
     def __init__(self, firstName, lastName, username, password, memberId=None):
         self.memberId = memberId
@@ -61,22 +60,25 @@ class Member:
         return row
 
     def updateMemberByMemberId(memberId,updatedMember):                             # method to edit a member in the db
-        currMember = Member.getMemberByMemberId(memberId)
-        try:
-            with conn:
-                cursor.execute("UPDATE member SET first_name=:firstName, last_name=:lastName, password=:password WHERE member_id=:memberId",
-                {'firstName':updatedMember.firstName, 'lastName':updatedMember.lastName, 'password':updatedMember.password, "memberId":currMember.memberId})
-            passw = "*" * len(updatedMember.password)
-            print(f"Updated member:{currMember.username} {currMember.firstName}, {currMember.lastName} with password {passw}.")
-            return True                                
-        except sqlite3.IntegrityError:
-            print("Member:This action is restricted, check if all the fields are valid and try again.")
-            return False
+        tempMember = Member.getMemberByMemberId(memberId)
+        if tempMember == None:
+            return None
+        else:
+            try:
+                with conn:
+                    cursor.execute("UPDATE member SET first_name=:firstName, last_name=:lastName, password=:password WHERE member_id=:memberId",
+                    {'firstName':updatedMember.firstName, 'lastName':updatedMember.lastName, 'password':updatedMember.password, "memberId":tempMember.memberId})
+                passw = "*" * len(updatedMember.password)
+                print(f"Updated member:{tempMember.username} {tempMember.firstName}, {tempMember.lastName} with password {passw}.")
+                return True                                
+            except sqlite3.IntegrityError:
+                print("Member:This action is restricted, check if all the fields are valid and try again.")
+                return False
 
     def deleteMemberByMemberId(memberId):                             # method to delete a member from the db
         tempMember = Member.getMemberByMemberId(memberId)
         if tempMember == None:                                  # no member found to be deleted
-            return False
+            return None
         else:
             with conn:
                 cursor.execute("DELETE FROM member WHERE member_id=:member_id", {'member_id': memberId})
@@ -152,7 +154,7 @@ class Category:
     def getAllCategoriesByMemberId(memberId):           # method to get all categories of a member from the db
         tempMember = Member.getMemberByMemberId(memberId)
         if tempMember == None:
-            return False
+            return None
         else:
             user = tempMember.username
             try:
@@ -160,10 +162,12 @@ class Category:
                     cursor.execute("SELECT * FROM category WHERE member_id=:member_id", {'member_id': memberId})
                 categories = cursor.fetchall()
                 print(f"Here are the categories of the {user}. \n {categories}")
-                return True
+                return categories
+                # return True
             except sqlite3.IntegrityError:
                 print("This action is restricted, check if all the fields are valid and try again.")
-                return False
+                return []
+                # return False
  
     def getCategoryByCategoryId(categoryId):
         with conn:
@@ -201,7 +205,6 @@ class Category:
             else:
                 print("Failed to delete")                       
                 return False
-
         
 class Transaction:
     def __init__(self, transactionName, transactionType, amount, date, categoryId, transactionId=None):
@@ -253,7 +256,7 @@ class Transaction:
     def getAllTransactionsByMemberId(memberId):
         tempMember = Member.getMemberByMemberId(memberId)
         if tempMember == None:
-            return False
+            return None
         else:
             user = tempMember.username
             try:
@@ -261,24 +264,28 @@ class Transaction:
                     cursor.execute('SELECT "transaction".transaction_name, "transaction".transaction_type, "transaction".amount, "transaction".transaction_date, category.category_name FROM "transaction" JOIN category ON "transaction".category_id = category.category_id WHERE category.member_id=:member_id', {'member_id': memberId})
                 transactions = cursor.fetchall()
                 print(f"Here are the transactions of the {user}. \n {transactions}")
-                return True
+                return transactions
+                # return True
             except sqlite3.IntegrityError:
                 print("This action is restricted, check if all the fields are valid and try again.")
+                return []
                 return False
 
     def getAllTransactionsByCategoryId(categoryId):                 # method to get all transactions of a member from the db
         tempCategory = Category.getCategoryByCategoryId(categoryId)
         if tempCategory == None:
-            return False
+            return None
         else:    
             try:
                 with conn:
                     cursor.execute('SELECT * FROM "transaction" WHERE category_id=:category_id', {'category_id': categoryId})
                 transactions = cursor.fetchall()
                 print(f"Here are the transactions of the {tempCategory.categoryName}. \n {transactions}")
-                return True
+                return transactions
+                # return True
             except sqlite3.IntegrityError:
                 print("This action is restricted, check if all the fields are valid and try again.")
+                return []
                 return False
         
     def UpdateTransactionByTransactionId():             # method to edit a transaction of a member from the db
@@ -301,7 +308,7 @@ class Transaction:
     def getAllTransactionsByMemberIdFilterByType(memberId,transactionType):     #This method can be used to get all the expenses or income of a user
         tempMember = Member.getMemberByMemberId(memberId)
         if tempMember == None:
-            return False
+            return None
         else:
             user = tempMember.username
             try:
@@ -309,9 +316,11 @@ class Transaction:
                     cursor.execute('SELECT "transaction".transaction_name, "transaction".amount, "transaction".transaction_date, category.category_name FROM "transaction" JOIN category ON "transaction".category_id = category.category_id WHERE category.member_id=:member_id AND "transaction".transaction_type =:transaction_type', {'member_id': memberId,'transaction_type':transactionType})
                 transactions = cursor.fetchall()
                 print(f"Here are the {transactionType} transactions of the {user}. \n {transactions}")
-                return True
+                return transactions
+                # return True
             except sqlite3.IntegrityError:
                 print("This action is restricted, check if all the fields are valid and try again.")
+                return []
                 return False
 
 def menu():
