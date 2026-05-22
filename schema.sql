@@ -28,7 +28,7 @@ CREATE TABLE "transaction"
     transaction_name    TEXT NOT NULL,
     transaction_type    TEXT NOT NULL CHECK(transaction_type IN ('INCOME', 'EXPENSE')),
     amount              REAL NOT NULL CHECK(amount >= 0),
-    transaction_date    TIMESTAMP NOT NULL,
+    transaction_date    TEXT NOT NULL,
     category_id         INTEGER NOT NULL,
         FOREIGN KEY (category_id)
             REFERENCES category (category_id)
