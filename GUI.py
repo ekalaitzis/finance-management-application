@@ -207,7 +207,7 @@ header_fr.pack (side= "top", fill= "both")
 name_lbl = tk.Label(header_fr, text= "Name: Will retrieve auto", width= 30, anchor= "w", relief="groove")
 username_lbl = tk.Label(header_fr, text= "Username: Will retrieve auto", width= 30, anchor= "w", relief="groove")
 user_id = tk.Label(header_fr, text= "UserId: Will retrieve auto" , width= 30, anchor= "w", relief="groove")
-income_amount = tk.Label(header_fr, text= "Income: 3000" , width= 30, anchor= "w", relief="groove")
+income_amount = tk.Label(header_fr, text= f"Income: {be.Transaction.getAllAmountByMemberIdFilterByTransactionType(1,'INCOME')}" , width= 30, anchor= "w", relief="groove")
 expenses_amount = tk.Label(header_fr, text= "Expenses: 3000:" , width= 30, anchor= "w", relief="groove")
 
 # header position
@@ -329,7 +329,7 @@ transaction_date_lbl= tk.Label(btm_right_side_fr,text= "Date:",  width=30)
 transaction_date_entry=DateEntry(btm_right_side_fr,width= 27, date_pattern = "dd-mm-yyyy")
 transaction_category_lbl= tk.Label(btm_right_side_fr,text= "Category:", width=30)
 transaction_category_entry= ttk.Combobox (btm_right_side_fr,  textvariable=transaction_category_vr , width=27)
-transaction_category_entry["values"]=("grocery","restaurant","salary")
+transaction_category_entry["values"]=be.Category.getAllCategoriesByMemberId(2)
 transaction_add_button=tk.Button(btm_right_side_fr, text= "Submit" , width=30 , command=add_transaction)
 
 transaction_name_lbl.grid(row=0,column=0,sticky="nw", padx=5, pady=5)
