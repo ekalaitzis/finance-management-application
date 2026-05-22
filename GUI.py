@@ -10,9 +10,11 @@ import datetime
 
 
 user_ID_number=0
-category_map = {}
+category_map_name_id = {}
+category_map_id_name = {}
 category_list = []
-transaction_type_list = ["Income","Expense"]
+transaction_type_list = ["INCOME","EXPENSE"]
+overview_transactions_list = []
 # =========================
 # functions
 # =========================
@@ -37,8 +39,10 @@ def show_dashboard():
         name_lbl.configure(text="Name: "+ user_information[1] + " " + user_information[2])
         username_lbl.configure(text= "Username: " + user_information[3] )
         user_id.configure(text= "User ID: " + str(user_information[0]))
-        user_ID_number=user_information[0]
+        global user_ID_number
+        user_ID_number= user_information[0]
         collect_category_per_user(user_ID_number)
+        collect_all_transactions_per_user(user_ID_number)
 
     else:
         messagebox.showerror("Login Error", "Username or password is wrong.\nPlease try again.")
@@ -108,10 +112,22 @@ def number_validation(value):# use to check the number is positive float
 
 def collect_category_per_user (User_id):
     full_list = be.Category.getAllCategoriesByMemberId(User_id)
+    global category_map_name_id,category_map_id_name
     for category_id,category_name,member_id in full_list:
-        category_map[category_name]=category_id
+        category_map_name_id[category_name]=category_id
+        category_map_id_name[category_id]=category_name
         category_list.append(category_name)
-    transaction_category_entry ["value"]=category_list
+    transaction_category_entry ["values"]=category_list
+
+def collect_all_transactions_per_user (User_id):
+    overview_transactions_list.clear()
+    overview_transactions_list.extend(be.Transaction.getAllTransactionsByMemberId(User_id))
+    for item in left_table.get_children():
+        left_table.delete(item)
+    for row in overview_transactions_list:
+        left_table.insert("", "end", values=row)
+    print(type(overview_transactions_list))
+
 
 
 def add_transaction():
@@ -132,7 +148,10 @@ def add_transaction():
         transaction_name_lbl.configure(fg= "black")
         transaction_category_lbl.configure(fg= "black")
         transaction_type_lbl.configure(fg= "black")
-        be.Transaction(transaction_name_vr.get(),transaction_type_vr.get(),transaction_amount_vr.get(), transaction_date_entry.get(),category_map[transaction_category_vr.get()])
+        selected_category_id = category_map_name_id[transaction_category_vr.get()]
+        new_transaction=be.Transaction(transaction_name_vr.get(),transaction_type_vr.get(),transaction_amount_vr.get(), transaction_date_entry.get(),selected_category_id)
+        new_transaction.createTransactionByCategoryId(selected_category_id)
+        collect_all_transactions_per_user(user_ID_number)
         transaction_amount_vr.set("")
         transaction_name_vr.set("")
         transaction_category_vr.set("")
@@ -300,20 +319,20 @@ left_side_fr.grid_rowconfigure(0, weight=1)
 left_side_fr.grid_columnconfigure(0, weight=1)
 
 
-left_table = ttk.Treeview (left_side_fr,columns=("Transaction","Amount" ,"Type", "Category", "Date", "User" ,), show="headings" )
+left_table = ttk.Treeview (left_side_fr,columns=("Transaction","Type","Amount", "Date", "Category"), show="headings" )
 left_table.heading("Transaction", text= "Transaction")
 left_table.heading("Amount", text= "Amount" )
 left_table.heading("Type", text= "Type" )
 left_table.heading("Category", text= "Category" )
 left_table.heading("Date", text= "Date" )
-left_table.heading("User", text= "User" )
+
 
 left_table.column("Transaction", stretch=True)
 left_table.column("Amount", stretch=True)
 left_table.column("Type", stretch=True)
 left_table.column("Category", stretch=True)
 left_table.column("Date", stretch=True)
-left_table.column("User", stretch=True)
+
 
 scrollbar_y= ttk.Scrollbar (left_side_fr,orient="vertical", command= left_table.yview)
 left_table.configure(yscrollcommand=scrollbar_y.set)
@@ -322,17 +341,8 @@ left_table.configure(xscrollcommand=scrollbar_x.set)
 scrollbar_y.grid(row=0,column=1, sticky= "ns")
 scrollbar_x.grid(row=1,column=0, sticky= "ew")
 
-# fake data to use
-random_data=[
-    ("random information","1000","income","salary","01-01-2025","alex"),
-    ("random information","1000","income","salary","01-01-2025","alex"),
-    ("random information","1000","income","salary","01-01-2025","alex"),
-    ("random information","1000","income","salary","01-01-2025","alex"),
-    ("random information","1000","income","salary","01-01-2025","alex"),
-    ("random information","1000","income","salary","01-01-2025","alex"),
-]
 
-for row in random_data:
+for row in overview_transactions_list:
     left_table.insert("","end", values=row )
 
 left_table.grid(row= 0 , column= 0 , sticky= "nsew")
