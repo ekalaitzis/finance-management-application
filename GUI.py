@@ -32,17 +32,20 @@ def show_login():
 def show_dashboard():
 
     if be.Member.validateMember(username_added.get(),password_added.get()):
+        user_information = be.Member.getMemberByUsername(username_added.get())
+        global user_ID_number
+        user_ID_number= user_information[0]
         login_fr.pack_forget()
         main.geometry("1200x800")
         dashboard_fr.pack(fill="both", expand=True)
-        user_information = be.Member.getMemberByUsername(username_added.get())
         name_lbl.configure(text="Name: "+ user_information[1] + " " + user_information[2])
         username_lbl.configure(text= "Username: " + user_information[3] )
         user_id.configure(text= "User ID: " + str(user_information[0]))
-        global user_ID_number
-        user_ID_number= user_information[0]
+        income_amount.configure(text= "Income: " + str(chart.total_income_by_user(user_ID_number)) )
+        expenses_amount.configure(text= "Expenses: " + str(chart.total_expences_by_user(user_ID_number)))
         collect_category_per_user(user_ID_number)
         collect_all_transactions_per_user(user_ID_number)
+        chart.income_vrs_expenses(top_right_side_fr, user_ID_number)
 
     else:
         messagebox.showerror("Login Error", "Username or password is wrong.\nPlease try again.")
@@ -152,6 +155,9 @@ def add_transaction():
         new_transaction=be.Transaction(transaction_name_vr.get(),transaction_type_vr.get(),transaction_amount_vr.get(), transaction_date_entry.get(),selected_category_id)
         new_transaction.createTransactionByCategoryId(selected_category_id)
         collect_all_transactions_per_user(user_ID_number)
+        chart.income_vrs_expenses(top_right_side_fr, user_ID_number)
+        income_amount.configure(text= "Income: " + str(chart.total_income_by_user(user_ID_number)) )
+        expenses_amount.configure(text= "Expenses: " + str(chart.total_expences_by_user(user_ID_number)))
         transaction_amount_vr.set("")
         transaction_name_vr.set("")
         transaction_category_vr.set("")
@@ -353,7 +359,7 @@ top_right_side_fr.grid(row=0, column = 1, columnspan=2, sticky="nsew")
 top_right_side_fr.grid_rowconfigure(0, weight=1)
 top_right_side_fr.grid_columnconfigure(0, weight=1)
 
-chart.income_vrs_expenses(top_right_side_fr)
+chart.income_vrs_expenses(top_right_side_fr,user_ID_number)
 
 btm_right_side_fr=tk.Frame(overview_fr, relief="ridge", bd=2)
 btm_right_side_fr.grid(row=1, column=1, sticky="nsew",columnspan=2, padx=20, pady=20)
