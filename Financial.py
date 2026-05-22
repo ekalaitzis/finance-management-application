@@ -271,6 +271,25 @@ class Transaction:
                 return []
                 # return False
 
+    def getAllAmountByMemberIdFilterByTransactionType(memberId,transactionType):                    #method to get the total amount of income or expenses of a user 
+        tempMember = Member.getMemberByMemberId(memberId)
+        if tempMember == None:
+            return None
+        else:
+            user = tempMember.username
+            try:
+                with conn:
+                    cursor.execute('SELECT SUM("transaction".amount) AS total_amount FROM "transaction" JOIN category ON "transaction".category_id = category.category_id WHERE category.member_id=:member_id AND "transaction".transaction_type =:transaction_type',
+                                    {'member_id': memberId, 'transaction_type': transactionType})
+                total = cursor.fetchone()
+                return total[0]
+                # return True
+            except sqlite3.IntegrityError:
+                print("This action is restricted, check if all the fields are valid and try again.")
+                return 0
+                # return False
+
+        
     def getAllTransactionsByMemberIdFilterDate(memberId,fromDate, tillDate):
         tempMember = Member.getMemberByMemberId(memberId)
         if tempMember == None:
