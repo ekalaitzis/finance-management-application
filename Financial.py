@@ -256,7 +256,7 @@ class Transaction:
     def getAllTransactionsByMemberId(memberId):
         tempMember = Member.getMemberByMemberId(memberId)
         if tempMember == None:
-            return None
+            return []
         else:
             user = tempMember.username
             try:
