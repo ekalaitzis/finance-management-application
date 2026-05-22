@@ -1,5 +1,3 @@
-import sys
-print(sys.executable)
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
@@ -83,7 +81,6 @@ def income_vrs_expenses(frame):
         ax.text( width / 2, bar.get_y() + bar.get_height() / 2, str(total_value[i]), ha='center', va='center', color='white', fontweight='bold' )
     ax.set_title ("Income vs Expenses")
 
-    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
     canvas = FigureCanvasTkAgg(fig, master= frame )
     canvas.draw()

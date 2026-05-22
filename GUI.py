@@ -7,6 +7,12 @@ import charts as chart
 import datetime
 
 
+
+
+user_ID_number=0
+category_map = {}
+category_list = []
+transaction_type_list = ["Income","Expense"]
 # =========================
 # functions
 # =========================
@@ -31,11 +37,14 @@ def show_dashboard():
         name_lbl.configure(text="Name: "+ user_information[1] + " " + user_information[2])
         username_lbl.configure(text= "Username: " + user_information[3] )
         user_id.configure(text= "User ID: " + str(user_information[0]))
+        user_ID_number=user_information[0]
+        collect_category_per_user(user_ID_number)
 
     else:
         messagebox.showerror("Login Error", "Username or password is wrong.\nPlease try again.")
         username_label.configure(fg="red")
         password_label.configure(fg="red")
+
 
 def show_overview():
     overview_fr.tkraise()
@@ -53,19 +62,37 @@ def show_subscription():
     subscription_fr.tkraise()
 
 def new_registration():
-    if password_new.get() == password_new2.get():
-        new_user = be.Member(first_name.get(), last_name.get(), username_new.get(), password_new.get())
-        success = new_user.createMember()
-
-        if success:
-            show_login()
-        else:
-            messagebox.showerror("Registration Failed", "User couldn't be created, \nPlease choose an other Username ")
-            new_username_label.configure(fg="red")
-    else:
-        messagebox.showerror("Password Error", "Passwords do not match.")
-        new_password_label.configure(fg= "red")
+    new_username_label.configure(fg="black")
+    new_first_name_label.configure(fg="black")
+    new_last_name_label.configure(fg="black")
+    new_password_label.configure(fg="black")
+    new_password2_label.configure(fg="black")
+    if first_name.get().strip() == "" or last_name.get().strip() == "" or username_new.get().strip() == "" or password_new.get().strip()=="" or password_new2.get().strip()=="":
+        messagebox.showerror("Empty Fields", "Please add all the required fields.")
+        new_username_label.configure(fg="red")
+        new_first_name_label.configure(fg="red")
+        new_last_name_label.configure(fg="red")
+        new_password_label.configure(fg="red")
         new_password2_label.configure(fg="red")
+    else:
+        if password_new.get() == password_new2.get():
+            new_user = be.Member(first_name.get(), last_name.get(), username_new.get(), password_new.get())
+            success = new_user.createMember()
+
+            if success:
+                show_login()
+                first_name.set("")
+                last_name.set("")
+                username_new.set("")
+                password_new.set("")
+                password_new2.set("")
+            else:
+                messagebox.showerror("Registration Failed", "User couldn't be created, \nPlease choose an other Username ")
+                new_username_label.configure(fg="red")
+        else:
+            messagebox.showerror("Password Error", "Passwords do not match.")
+            new_password_label.configure(fg= "red")
+            new_password2_label.configure(fg="red")
 
 def number_validation(value):# use to check the number is positive float
     try:
@@ -79,8 +106,16 @@ def number_validation(value):# use to check the number is positive float
     except ValueError:
         return False
 
+def collect_category_per_user (User_id):
+    full_list = be.Category.getAllCategoriesByMemberId(User_id)
+    for category_id,category_name,member_id in full_list:
+        category_map[category_name]=category_id
+        category_list.append(category_name)
+    transaction_category_entry ["value"]=category_list
+
+
 def add_transaction():
-    if transaction_name_vr.get() == "" or transaction_type_vr.get() == "" or transaction_amount_vr.get() == "" or transaction_category_vr.get()=="":
+    if transaction_name_vr.get().strip() == "" or transaction_type_vr.get().strip() == "" or transaction_amount_vr.get().strip() == "" or transaction_category_vr.get().strip()=="" or transaction_category_entry.get() not in category_list or transaction_type_entry.get() not in transaction_type_list:
         messagebox.showerror("Empty Fields", "Please add all the required fields.")
         transaction_amount_lbl.configure(fg= "red")
         transaction_name_lbl.configure(fg= "red")
@@ -97,11 +132,12 @@ def add_transaction():
         transaction_name_lbl.configure(fg= "black")
         transaction_category_lbl.configure(fg= "black")
         transaction_type_lbl.configure(fg= "black")
-    transaction_amount_vr.set("")
-    transaction_name_vr.set("")
-    transaction_category_vr.set("")
-    transaction_type_vr.set("")
-    transaction_date_entry.set_date(datetime.date.today())
+        be.Transaction(transaction_name_vr.get(),transaction_type_vr.get(),transaction_amount_vr.get(), transaction_date_entry.get(),category_map[transaction_category_vr.get()])
+        transaction_amount_vr.set("")
+        transaction_name_vr.set("")
+        transaction_category_vr.set("")
+        transaction_type_vr.set("")
+        transaction_date_entry.set_date(datetime.date.today())
 
 
 
@@ -264,13 +300,15 @@ left_side_fr.grid_rowconfigure(0, weight=1)
 left_side_fr.grid_columnconfigure(0, weight=1)
 
 
-left_table = ttk.Treeview (left_side_fr,columns=("Amount" ,"Type", "Category", "Date", "User" ,), show="headings" )
+left_table = ttk.Treeview (left_side_fr,columns=("Transaction","Amount" ,"Type", "Category", "Date", "User" ,), show="headings" )
+left_table.heading("Transaction", text= "Transaction")
 left_table.heading("Amount", text= "Amount" )
 left_table.heading("Type", text= "Type" )
 left_table.heading("Category", text= "Category" )
 left_table.heading("Date", text= "Date" )
 left_table.heading("User", text= "User" )
 
+left_table.column("Transaction", stretch=True)
 left_table.column("Amount", stretch=True)
 left_table.column("Type", stretch=True)
 left_table.column("Category", stretch=True)
@@ -286,12 +324,12 @@ scrollbar_x.grid(row=1,column=0, sticky= "ew")
 
 # fake data to use
 random_data=[
-    ("1000","income","salary","01-01-2025","alex"),
-    ("1000","income","salary","01-01-2025","alex"),
-    ("1000","income","salary","01-01-2025","alex"),
-    ("1000","income","salary","01-01-2025","alex"),
-    ("1000","income","salary","01-01-2025","alex"),
-    ("1000","income","salary","01-01-2025","alex"),
+    ("random information","1000","income","salary","01-01-2025","alex"),
+    ("random information","1000","income","salary","01-01-2025","alex"),
+    ("random information","1000","income","salary","01-01-2025","alex"),
+    ("random information","1000","income","salary","01-01-2025","alex"),
+    ("random information","1000","income","salary","01-01-2025","alex"),
+    ("random information","1000","income","salary","01-01-2025","alex"),
 ]
 
 for row in random_data:
@@ -317,11 +355,12 @@ transaction_type_vr= tk.StringVar()
 transaction_amount_vr = tk.StringVar()
 transaction_category_vr= tk.StringVar()
 
+
 transaction_name_lbl = tk.Label(btm_right_side_fr,text= "Transaction:", width=30)
 transaction_name_entry = tk.Entry (btm_right_side_fr, textvariable=transaction_name_vr, width=30)
 transaction_type_lbl = tk.Label(btm_right_side_fr,text= "Type:",  width=30)
 transaction_type_entry= ttk.Combobox (btm_right_side_fr,  textvariable=transaction_type_vr , width=27)
-transaction_type_entry["values"]=("Income","Expense")
+transaction_type_entry["values"]=transaction_type_list
 transaction_type_entry.current()
 transaction_amount_lbl = tk.Label(btm_right_side_fr,text= "Amount:",  width=30)
 transaction_amount_entry = tk.Entry (btm_right_side_fr, textvariable=transaction_amount_vr, width=30)
@@ -329,7 +368,7 @@ transaction_date_lbl= tk.Label(btm_right_side_fr,text= "Date:",  width=30)
 transaction_date_entry=DateEntry(btm_right_side_fr,width= 27, date_pattern = "dd-mm-yyyy")
 transaction_category_lbl= tk.Label(btm_right_side_fr,text= "Category:", width=30)
 transaction_category_entry= ttk.Combobox (btm_right_side_fr,  textvariable=transaction_category_vr , width=27)
-transaction_category_entry["values"]=("grocery","restaurant","salary")
+transaction_category_entry["values"]=()
 transaction_add_button=tk.Button(btm_right_side_fr, text= "Submit" , width=30 , command=add_transaction)
 
 transaction_name_lbl.grid(row=0,column=0,sticky="nw", padx=5, pady=5)
