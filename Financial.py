@@ -203,7 +203,7 @@ class Category:
                 print(f"Category: {tempCategory.categoryName} deleted.")
                 return True
             else:
-                print("Failed to delete")                       
+                print("Failed to delete")
                 return False
         
 class Transaction:
@@ -288,8 +288,20 @@ class Transaction:
                 return []
                 return False
         
-    def UpdateTransactionByTransactionId():             # method to edit a transaction of a member from the db
-        pass
+    def UpdateTransactionByTransactionId(transactionId,updatedTransaction):             # method to edit a transaction of a member from the db
+        tempTransaction = Transaction.getTransactionByTransactionId(transactionId)
+        if tempTransaction == None:                                  # no category found to be deleted
+            return False
+        else:
+            try:
+                with conn:
+                    cursor.execute('UPDATE "transaction" SET transaction_name=:transaction_name, transaction_type, amount, transaction_date, category_id  WHERE transaction_id=:transactionId',
+                    {'transaction_name':updatedTransaction.transactionName, 'transaction_type':updatedTransaction.transactionType,  'amount':updatedTransaction.amount, 'transaction_date':updatedTransaction.date, 'category_id':updatedTransaction.categoryId, 'transactionId':transactionId})
+                print(f"Updated transaction name to:{tempTransaction.transactionName}.")
+                return True                                
+            except sqlite3.IntegrityError:
+                print("Transaction:This action is restricted, check if all the fields are valid and try again.")
+                return False
 
     def deleteTransactionByTransactionId(transactionId):             # method to delete a transaction of a member from the db
         tempTransaction = Transaction.getTransactionByTransactionId(transactionId)
