@@ -15,6 +15,10 @@ category_map_id_name = {}
 category_list = []
 transaction_type_list = ["INCOME","EXPENSE"]
 overview_transactions_list = []
+flr_date_to= datetime.datetime.today().date()
+flr_date_from= flr_date_to.replace(day=1)
+flr_date_to = flr_date_to.strftime("%d-%m-%Y")
+flr_date_from = flr_date_from.strftime("%d-%m-%Y")
 # =========================
 # functions
 # =========================
@@ -40,11 +44,11 @@ def show_dashboard():
         dashboard_fr.pack(fill="both", expand=True)
         name_lbl.configure(text="Name: "+ user_information[1] + " " + user_information[2])
         username_lbl.configure(text= "Username: " + user_information[3] )
-        user_id.configure(text= "User ID: " + str(user_information[0]))
-        income_amount.configure(text= "Income: " + str(chart.total_income_by_user(user_ID_number)) )
-        expenses_amount.configure(text= "Expenses: " + str(chart.total_expences_by_user(user_ID_number)))
+      #  user_id.configure(text= "User ID: " + str(user_information[0]))
+        income_amount.configure(text= "Income: " + str(be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_ID_number,"INCOME")) )
+        expenses_amount.configure(text= "Expenses: " + str(be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_ID_number,"EXPENSE")))
         collect_category_per_user(user_ID_number)
-        collect_all_transactions_per_user(user_ID_number)
+        collect_all_transactions_per_user(user_ID_number,flr_date_from,flr_date_to)
         chart.income_vrs_expenses(top_right_side_fr, user_ID_number)
 
     else:
@@ -122,14 +126,19 @@ def collect_category_per_user (User_id):
         category_list.append(category_name)
     transaction_category_entry ["values"]=category_list
 
-def collect_all_transactions_per_user (User_id):
+def collect_all_transactions_per_user (user_id,date_from,date_to):
+    global overview_transactions_list
     overview_transactions_list.clear()
-    overview_transactions_list.extend(be.Transaction.getAllTransactionsByMemberId(User_id))
+    iso_date_from = datetime.datetime.strptime(date_from, "%d-%m-%Y").strftime("%Y-%m-%d")
+    iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")
+    overview_transactions_list.extend(be.Transaction.getAllTransactionsByMemberIdFilterDate(user_id,iso_date_from,iso_date_to))
+    overview_transactions_list = [(t[0],t[1],t[2],datetime.datetime.strptime(t[3], "%Y-%m-%d").strftime("%d-%m-%Y"),t[4]) for t in overview_transactions_list]
     for item in left_table.get_children():
         left_table.delete(item)
-    for row in overview_transactions_list:
-        left_table.insert("", "end", values=row)
-    print(type(overview_transactions_list))
+    for row_row in overview_transactions_list:
+        left_table.insert("", "end", values=row_row)
+#    print(overview_transactions_list)
+#    print ( "DATE FROM " +str (date_from) + "TO " +str (date_to))
 
 
 
@@ -152,18 +161,24 @@ def add_transaction():
         transaction_category_lbl.configure(fg= "black")
         transaction_type_lbl.configure(fg= "black")
         selected_category_id = category_map_name_id[transaction_category_vr.get()]
-        new_transaction=be.Transaction(transaction_name_vr.get(),transaction_type_vr.get(),transaction_amount_vr.get(), transaction_date_entry.get(),selected_category_id)
+        iso_date = datetime.datetime.strptime(transaction_date_entry.get(),"%d-%m-%Y").date().isoformat()
+        new_transaction=be.Transaction(transaction_name_vr.get(),transaction_type_vr.get(),transaction_amount_vr.get(), iso_date,selected_category_id)
         new_transaction.createTransactionByCategoryId(selected_category_id)
-        collect_all_transactions_per_user(user_ID_number)
+        collect_all_transactions_per_user(user_ID_number,flr_date_from,flr_date_to)
         chart.income_vrs_expenses(top_right_side_fr, user_ID_number)
-        income_amount.configure(text= "Income: " + str(chart.total_income_by_user(user_ID_number)) )
-        expenses_amount.configure(text= "Expenses: " + str(chart.total_expences_by_user(user_ID_number)))
+        income_amount.configure(text= "Income: " + str(be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_ID_number,"INCOME")) )
+        expenses_amount.configure(text= "Expenses: " + str(be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_ID_number,"EXPENSE")))
         transaction_amount_vr.set("")
         transaction_name_vr.set("")
         transaction_category_vr.set("")
         transaction_type_vr.set("")
         transaction_date_entry.set_date(datetime.date.today())
 
+def filter_button_refresh ():
+    global flr_date_from , flr_date_to
+    flr_date_from = date_from_ENTRY.get()
+    flr_date_to = date_to_ENTRY.get()
+    collect_all_transactions_per_user(user_ID_number,flr_date_from,flr_date_to)
 
 
 # =========================
@@ -267,36 +282,47 @@ header_fr.pack (side= "top", fill= "both")
 # header widgets
 name_lbl = tk.Label(header_fr, text= "Name: Will retrieve auto", width= 30, anchor= "w", relief="groove")
 username_lbl = tk.Label(header_fr, text= "Username: Will retrieve auto", width= 30, anchor= "w", relief="groove")
-user_id = tk.Label(header_fr, text= "UserId: Will retrieve auto" , width= 30, anchor= "w", relief="groove")
-income_amount = tk.Label(header_fr, text= "Income: 3000" , width= 30, anchor= "w", relief="groove")
-expenses_amount = tk.Label(header_fr, text= "Expenses: 3000:" , width= 30, anchor= "w", relief="groove")
+#user_id = tk.Label(header_fr, text= "UserId: Will retrieve auto" , width= 30, anchor= "w", relief="groove")
+income_amount = tk.Label(header_fr, text= "Income:" , width= 30, anchor= "w", relief="groove")
+expenses_amount = tk.Label(header_fr, text= "Expenses:" , width= 30, anchor= "w", relief="groove")
+overview_button = tk.Button (header_fr, text= "Overview",width= 30, anchor= "w", command= show_overview )
+expenses_button = tk.Button (header_fr, text= "expenses",width= 30, anchor= "w", command=show_expenses)
+income_button = tk.Button (header_fr, text= "income",width= 30, anchor= "w" , command= show_income)
+subscription_button = tk.Button (header_fr, text= "subscription",width= 30, anchor= "w", command=show_subscription)
 
 # header position
-name_lbl.grid (row= 0 , column= 1 , padx=5 , pady= 5, sticky="w")
-username_lbl.grid (row= 0 , column= 2 , padx=5 , pady= 5, sticky="w")
-user_id.grid (row= 0, column= 0, padx=5 , pady= 5, sticky="w")
+name_lbl.grid (row= 0 , column= 0 , padx=5 , pady= 5, sticky="w")
+username_lbl.grid (row= 0 , column= 1 , padx=5 , pady= 5, sticky="w")
+#user_id.grid (row= 0, column= 0, padx=5 , pady= 5, sticky="w")
 income_amount.grid (row= 1 , column= 0 , padx=5 , pady= 5, sticky="w")
 expenses_amount.grid (row= 1 , column= 1 , padx=5 , pady= 5, sticky="w")
+overview_button.grid (row= 0 , column= 2 , padx=5 , pady= 5, sticky="w")
+expenses_button.grid (row= 1 , column= 2 , padx=5 , pady= 5, sticky="w")
+income_button.grid (row= 1 , column= 3 , padx=5 , pady= 5, sticky="w")
+subscription_button.grid (row= 0 , column= 3 , padx=5 , pady= 5, sticky="w")
 
-# Navigation frame
+# filter frame
 
-navigation_fr = tk.Frame(dashboard_fr, width=1200 , height=50)
-navigation_fr.pack_propagate(False)
-navigation_fr.pack (fill= "both")
+filter_fr = tk.Frame(dashboard_fr, width=1200 , height=50)
+filter_fr.pack_propagate(False)
+filter_fr.pack (fill= "both")
 
-# Navigation widgets
-overview_button = tk.Button (navigation_fr, text= "Overview",width= 30, anchor= "w", command= show_overview )
-account_button = tk.Button (navigation_fr, text= "Account",width= 30, anchor= "w", command = show_account)
-expenses_button = tk.Button (navigation_fr, text= "expenses",width= 30, anchor= "w", command=show_expenses)
-income_button = tk.Button (navigation_fr, text= "income",width= 30, anchor= "w" , command= show_income)
-subscription_button = tk.Button (navigation_fr, text= "subscription",width= 30, anchor= "w", command=show_subscription)
+# filter widgets
+date_from_lbl= tk.Label (filter_fr,text="date from:")
+date_from_ENTRY = DateEntry ( filter_fr , width= 25 , date_pattern = "dd-mm-yyyy")
+date_to_lbl= tk.Label (filter_fr,text="date to:")
+date_to_ENTRY = DateEntry ( filter_fr , width= 25 , date_pattern = "dd-mm-yyyy")
+flt_button_apply = tk.Button (filter_fr , width= 25, text= "Apply Filters" , command= filter_button_refresh)
 
-# Navigation position
-overview_button.grid (row= 0 , column= 0 , padx=5 , pady= 5, sticky="w")
-account_button.grid (row= 0 , column= 1 , padx=5 , pady= 5, sticky="w")
-expenses_button.grid (row= 0 , column= 2 , padx=5 , pady= 5, sticky="w")
-income_button.grid (row= 0 , column= 3 , padx=5 , pady= 5, sticky="w")
-subscription_button.grid (row= 0 , column= 4 , padx=5 , pady= 5, sticky="w")
+date_from_ENTRY.set_date(flr_date_from)
+date_to_ENTRY.set_date(flr_date_to)
+
+# filter position
+date_from_lbl.grid(row=0 , column=0 , padx= 2, pady = 5)
+date_from_ENTRY.grid(row=0 , column=1 , padx= 2, pady = 5)
+date_to_lbl.grid(row=0 , column=2 , padx= 2, pady = 5)
+date_to_ENTRY.grid(row=0 , column=3 , padx= 2, pady = 5)
+flt_button_apply.grid (row=0 , column=4 , padx= 2, pady = 5)
 
 # =========================
 # Content Frame
@@ -359,7 +385,7 @@ top_right_side_fr.grid(row=0, column = 1, columnspan=2, sticky="nsew")
 top_right_side_fr.grid_rowconfigure(0, weight=1)
 top_right_side_fr.grid_columnconfigure(0, weight=1)
 
-chart.income_vrs_expenses(top_right_side_fr,user_ID_number)
+
 
 btm_right_side_fr=tk.Frame(overview_fr, relief="ridge", bd=2)
 btm_right_side_fr.grid(row=1, column=1, sticky="nsew",columnspan=2, padx=20, pady=20)
@@ -398,12 +424,7 @@ transaction_date_entry.grid(row=3,column=1,sticky="ne", padx=5, pady=5)
 transaction_category_lbl.grid(row=4,column=0,sticky="nw", padx=5, pady=5)
 transaction_category_entry.grid(row=4,column=1,sticky="ne", padx=5, pady=5)
 transaction_add_button.grid(row=5,column=1,sticky="ne", padx=5, pady=5)
-# =========================
-# Account Frame
-# =========================
-account_fr= tk.Frame (basic_fr, width=1200 , height=650 , bg="yellow")
-account_fr.grid_propagate(False)
-account_fr.grid(row=0, column=0, sticky="nsew")
+
 # =========================
 # expenses Frame
 # =========================
