@@ -11,7 +11,7 @@ DEFAULT_CATEGORIES = [
 ]
 
 
-conn = sqlite3.connect('Finance.db', detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
+conn = sqlite3.connect('Finance.db')
 cursor = conn.cursor()
 
 class Member:
@@ -180,6 +180,13 @@ class Category:
             print(Category(row[1], row[2], row[0]))
             return Category(row[1], row[2], row[0])
 
+    def getCategoryIdByCategoryName(memberid,categoryName):
+        allCategories = Category.getAllCategoriesByMemberId(memberid)
+        for cat in allCategories:
+            if cat[1] == categoryName:
+                return cat[0]
+        return None
+
     def UpdateCategoryByCategoryId(categoryId,updatedCategory):                   # method to edit a category of a member from the db
         currCategory = Category.getCategoryByCategoryId(categoryId)
         try:
@@ -192,20 +199,28 @@ class Category:
             print("Category:This action is restricted, check if all the fields are valid and try again.")
             return False
 
-    def deleteCategoryByCategoryId(categoryId):                   # method to delete a category of a member from the db
+    def deleteCategoryByCategoryId(categoryId):                                                                 # method to delete a category of a member from the db
         tempCategory = Category.getCategoryByCategoryId(categoryId)
-        if tempCategory == None:                                  # no category found to be deleted
+        if tempCategory == None:                                                                                # no category found to be deleted
             return False
         else:
+            tempTransactions = Transaction.getAllTransactionsByCategoryId(categoryId)                           #save the transactions to move to another category
             with conn:
                 cursor.execute("DELETE FROM category WHERE category_id=:category_id", {'category_id': categoryId})
-            if Category.getCategoryByCategoryId(categoryId) == None:    #check if deleted
+            if Category.getCategoryByCategoryId(categoryId) == None:                                            #check if deleted
+                generalCategoryId = Category.getCategoryIdByCategoryName(tempCategory.memberId, "General")      #find the id of the "General" category
+                if generalCategoryId == None:                                                                   # "General" doesnt exist as a category
+                    c1 = Category("General", tempCategory.memberId)                                             #create a category object with category name "General"
+                    Category.createCategoryByMemberId(c1, tempCategory.memberId)                                #add the object to the db, now there is a "General" category
+                for tr in tempTransactions:                                                                     #loop though all saved transactions
+                    t1 = Transaction(tr[1], tr[2], tr[3], tr[4], generalCategoryId)                             #create a transaction object each iteration from the saved transactions
+                    Transaction.createTransactionByCategoryId(t1,generalCategoryId)                             #add the instance of each transaction to the db
                 print(f"Category: {tempCategory.categoryName} deleted.")
                 return True
             else:
                 print("Failed to delete")
                 return False
-        
+
 class Transaction:
     def __init__(self, transactionName, transactionType, amount, date, categoryId, transactionId=None):
         self.transactionId = transactionId
@@ -256,7 +271,7 @@ class Transaction:
     def getAllTransactionsByMemberId(memberId):
         tempMember = Member.getMemberByMemberId(memberId)
         if tempMember == None:
-            return None
+            return []
         else:
             user = tempMember.username
             try:
@@ -281,14 +296,13 @@ class Transaction:
                 with conn:
                     cursor.execute('SELECT SUM("transaction".amount) AS total_amount FROM "transaction" JOIN category ON "transaction".category_id = category.category_id WHERE category.member_id=:member_id AND "transaction".transaction_type =:transaction_type',
                                     {'member_id': memberId, 'transaction_type': transactionType})
-                total = cursor.fetchone()
-                return total[0]
+                total = cursor.fetchone()[0]
+                return total if total is not  None else 0 # need this in case the user still doesnt have any income or expense
                 # return True
             except sqlite3.IntegrityError:
                 print("This action is restricted, check if all the fields are valid and try again.")
                 return 0
                 # return False
-
         
     def getAllTransactionsByMemberIdFilterDate(memberId,fromDate, tillDate):
         tempMember = Member.getMemberByMemberId(memberId)
@@ -325,7 +339,7 @@ class Transaction:
                 print("This action is restricted, check if all the fields are valid and try again.")
                 return []
                 return False
-        
+
     def UpdateTransactionByTransactionId(transactionId,updatedTransaction):             # method to edit a transaction of a member from the db
         tempTransaction = Transaction.getTransactionByTransactionId(transactionId)
         if tempTransaction == None:                                  # no category found to be deleted
@@ -333,7 +347,7 @@ class Transaction:
         else:
             try:
                 with conn:
-                    cursor.execute('UPDATE "transaction" SET transaction_name=:transaction_name, transaction_type, amount, transaction_date, category_id  WHERE transaction_id=:transactionId',
+                    cursor.execute('UPDATE "transaction" SET transaction_name=:transaction_name, transaction_type=:transaction_type, amount=:amount, transaction_date=:transaction_date, category_id=:category_id  WHERE transaction_id=:transactionId',
                     {'transaction_name':updatedTransaction.transactionName, 'transaction_type':updatedTransaction.transactionType,  'amount':updatedTransaction.amount, 'transaction_date':updatedTransaction.date, 'category_id':updatedTransaction.categoryId, 'transactionId':transactionId})
                 print(f"Updated transaction name to:{tempTransaction.transactionName}.")
                 return True                                
@@ -390,8 +404,12 @@ class Transaction:
                 print("This action is restricted, check if all the fields are valid and try again.")
                 return []
                 # return False
-
-
+                
+    def getTotalByMemberId(memberId):
+        income = Transaction.getAllAmountByMemberIdFilterByTransactionType(memberId, "INCOME")
+        expense = Transaction.getAllAmountByMemberIdFilterByTransactionType(memberId, "EXPENSE")
+        return income - expense
+    
 def menu():
         while True:
             print("\n=== Διαχείριση Φοιτητών ===")
@@ -480,8 +498,9 @@ def menu():
                 else:
                     transactionType = "EXPENSE"
                 Transaction.getAllTransactionsByMemberIdFilterByType(id,transactionType)
-
-            
+            elif choice == '17':
+                id = int(input("Select member id:"))
+                Transaction.getAllTransactionsByMemberIdGroupedByCategory(id)
             elif choice == '0':
                 print("Bye!")
                 break
