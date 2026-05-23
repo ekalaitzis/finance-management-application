@@ -2,22 +2,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import Financial as be
 
-# =========================
-# total income and total expenses
-# =========================
-def total_income_by_user (user_id):
-    total_income=0
-    for t in be.Transaction.getAllTransactionsByMemberId(user_id):
-        if t[1] == "INCOME":
-            total_income += t[2]
-    return total_income
 
-def total_expences_by_user (user_id):
-    total_expenses=0
-    for t in be.Transaction.getAllTransactionsByMemberId(user_id):
-        if t[1] == "EXPENSE":
-            total_expenses += t[2]
-    return total_expenses
 
 # =========================
 # Pie chart
@@ -31,13 +16,9 @@ def income_vrs_expenses(frame,user_id):
     for widget in frame.winfo_children():
         widget.destroy()
 
-    total_income=0
-    total_expenses=0
-    for t in be.Transaction.getAllTransactionsByMemberId(user_id):
-        if t[1] == "INCOME":
-            total_income += t[2]
-        else:
-            total_expenses+=t[2]
+    total_income= be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_id,"INCOME")
+    total_expenses=be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_id,"EXPENSE")
+
 
     money_type= ["Expenses","Income"]
     total_value = [round(total_expenses,2), round(total_income,2 )]
