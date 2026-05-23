@@ -288,7 +288,6 @@ class Transaction:
                 print("This action is restricted, check if all the fields are valid and try again.")
                 return 0
                 # return False
-
         
     def getAllTransactionsByMemberIdFilterDate(memberId,fromDate, tillDate):
         tempMember = Member.getMemberByMemberId(memberId)
@@ -333,7 +332,7 @@ class Transaction:
         else:
             try:
                 with conn:
-                    cursor.execute('UPDATE "transaction" SET transaction_name=:transaction_name, transaction_type, amount, transaction_date, category_id  WHERE transaction_id=:transactionId',
+                    cursor.execute('UPDATE "transaction" SET transaction_name=:transaction_name, transaction_type=:transaction_type, amount=:amount, transaction_date=:transaction_date, category_id=:category_id  WHERE transaction_id=:transactionId',
                     {'transaction_name':updatedTransaction.transactionName, 'transaction_type':updatedTransaction.transactionType,  'amount':updatedTransaction.amount, 'transaction_date':updatedTransaction.date, 'category_id':updatedTransaction.categoryId, 'transactionId':transactionId})
                 print(f"Updated transaction name to:{tempTransaction.transactionName}.")
                 return True                                
@@ -390,8 +389,12 @@ class Transaction:
                 print("This action is restricted, check if all the fields are valid and try again.")
                 return []
                 # return False
-
-
+                
+    def getTotalByMemberId(memberId):
+        income = Transaction.getAllAmountByMemberIdFilterByTransactionType(memberId, "INCOME")
+        expense = Transaction.getAllAmountByMemberIdFilterByTransactionType(memberId, "EXPENSE")
+        return income - expense
+    
 def menu():
         while True:
             print("\n=== Διαχείριση Φοιτητών ===")
@@ -480,8 +483,9 @@ def menu():
                 else:
                     transactionType = "EXPENSE"
                 Transaction.getAllTransactionsByMemberIdFilterByType(id,transactionType)
-
-            
+            elif choice == '17':
+                id = int(input("Select member id:"))
+                Transaction.getAllTransactionsByMemberIdGroupedByCategory(id)
             elif choice == '0':
                 print("Bye!")
                 break
