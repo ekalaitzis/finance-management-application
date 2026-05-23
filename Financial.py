@@ -11,7 +11,7 @@ DEFAULT_CATEGORIES = [
 ]
 
 
-conn = sqlite3.connect('Finance.db', detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
+conn = sqlite3.connect('Finance.db')
 cursor = conn.cursor()
 
 class Member:
