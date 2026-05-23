@@ -180,6 +180,13 @@ class Category:
             print(Category(row[1], row[2], row[0]))
             return Category(row[1], row[2], row[0])
 
+    def getCategoryIdByCategoryName(memberid,categoryName):
+        allCategories = Category.getAllCategoriesByMemberId(memberid)
+        for cat in allCategories:
+            if cat[1] == categoryName:
+                return cat[0]
+        return None
+
     def UpdateCategoryByCategoryId(categoryId,updatedCategory):                   # method to edit a category of a member from the db
         currCategory = Category.getCategoryByCategoryId(categoryId)
         try:
@@ -192,14 +199,22 @@ class Category:
             print("Category:This action is restricted, check if all the fields are valid and try again.")
             return False
 
-    def deleteCategoryByCategoryId(categoryId):                   # method to delete a category of a member from the db
+    def deleteCategoryByCategoryId(categoryId):                                                                 # method to delete a category of a member from the db
         tempCategory = Category.getCategoryByCategoryId(categoryId)
-        if tempCategory == None:                                  # no category found to be deleted
+        if tempCategory == None:                                                                                # no category found to be deleted
             return False
         else:
+            tempTransactions = Transaction.getAllTransactionsByCategoryId(categoryId)                           #save the transactions to move to another category
             with conn:
                 cursor.execute("DELETE FROM category WHERE category_id=:category_id", {'category_id': categoryId})
-            if Category.getCategoryByCategoryId(categoryId) == None:    #check if deleted
+            if Category.getCategoryByCategoryId(categoryId) == None:                                            #check if deleted
+                generalCategoryId = Category.getCategoryIdByCategoryName(tempCategory.memberId, "General")      #find the id of the "General" category
+                if generalCategoryId == None:                                                                   # "General" doesnt exist as a category
+                    c1 = Category("General", tempCategory.memberId)                                             #create a category object with category name "General"
+                    Category.createCategoryByMemberId(c1, tempCategory.memberId)                                #add the object to the db, now there is a "General" category
+                for tr in tempTransactions:                                                                     #loop though all saved transactions
+                    t1 = Transaction(tr[1], tr[2], tr[3], tr[4], generalCategoryId)                             #create a transaction object each iteration from the saved transactions
+                    Transaction.createTransactionByCategoryId(t1,generalCategoryId)                             #add the instance of each transaction to the db
                 print(f"Category: {tempCategory.categoryName} deleted.")
                 return True
             else:
@@ -324,7 +339,7 @@ class Transaction:
                 print("This action is restricted, check if all the fields are valid and try again.")
                 return []
                 return False
-        
+
     def UpdateTransactionByTransactionId(transactionId,updatedTransaction):             # method to edit a transaction of a member from the db
         tempTransaction = Transaction.getTransactionByTransactionId(transactionId)
         if tempTransaction == None:                                  # no category found to be deleted
