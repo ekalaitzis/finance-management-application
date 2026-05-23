@@ -205,7 +205,7 @@ class Category:
             else:
                 print("Failed to delete")
                 return False
-        
+
 class Transaction:
     def __init__(self, transactionName, transactionType, amount, date, categoryId, transactionId=None):
         self.transactionId = transactionId
@@ -281,8 +281,8 @@ class Transaction:
                 with conn:
                     cursor.execute('SELECT SUM("transaction".amount) AS total_amount FROM "transaction" JOIN category ON "transaction".category_id = category.category_id WHERE category.member_id=:member_id AND "transaction".transaction_type =:transaction_type',
                                     {'member_id': memberId, 'transaction_type': transactionType})
-                total = cursor.fetchone()
-                return total[0]
+                total = cursor.fetchone()[0]
+                return total if total is not  None else 0 # need this in case the user still doesnt have any income or expense
                 # return True
             except sqlite3.IntegrityError:
                 print("This action is restricted, check if all the fields are valid and try again.")
