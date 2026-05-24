@@ -430,7 +430,7 @@ class Transaction:
                 return []
                 return False
 
-    def getAllTransactionsByMemberIdGroupedByCategory(memberId):
+    def getAllTransactionsByMemberIdGroupedByCategory(memberId, transactionType):
         tempMember = Member.getMemberByMemberId(memberId)
         if tempMember == None:
             return None
@@ -438,7 +438,7 @@ class Transaction:
             user = tempMember.username
             try:
                 with conn:
-                    cursor.execute('SELECT category.category_name, "transaction".amount FROM "transaction" JOIN category ON "transaction".category_id = category.category_id WHERE category.member_id=:member_id', {'member_id': memberId})
+                    cursor.execute('SELECT category.category_name, "transaction".amount FROM "transaction" JOIN category ON "transaction".category_id = category.category_id WHERE category.member_id=:member_id AND "transaction".transaction_type =:transaction_type', {'member_id': memberId,'transaction_type':transactionType})
                 transactions = cursor.fetchall()
                 print(f"Here are the transactions of each category of the {user}. \n {transactions}")
                 return transactions
