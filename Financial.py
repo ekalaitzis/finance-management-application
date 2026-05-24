@@ -332,7 +332,7 @@ class Transaction:
     def getAllAmountByMemberIdFilterByTransactionType(memberId,transactionType):                    #method to get the total amount of income or expenses of a user 
         tempMember = Member.getMemberByMemberId(memberId)
         if tempMember == None:
-            return None
+            return 0
         else:
             user = tempMember.username
             try:
