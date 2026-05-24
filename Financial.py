@@ -264,42 +264,40 @@ class Transaction:
             except sqlite3.OperationalError as e:
                 print(f"OperationalError: {e}")
 
-    def addRecurringTransaction(transaction):    
-        datex = str(transaction.date)
-        year = int(datex[0:4])
-        month = int(datex[5:7])
-        day = int(datex[8:10])
-        tDate = datetime.date(year, month, day)
-        currDate = datetime.date.today()
-        print(f"{tDate} vs \n {currDate}")
-        while tDate < currentDate:
-            month += 1
+    def addRecurringTransaction(transaction):                                       #takes an existing transaction as a parameter and adds transactions to the db up to the current date
+        strDate = str(transaction.date)                                             #convert transaction date to string
+        year = int(strDate[0:4])
+        month = int(strDate[5:7])
+        day = int(strDate[8:10])                                                    
+        tempDate = datetime.date(year, month, day)                                  #split the string int year, month , day and save it in a temporary variable
+        while tempDate < currentDate:                                               #from the transcation date till todays date
+            month += 1                                                              #increment the month by 1 and up to 12(december)
             if month == 13:
                 month = 1
                 year += 1
-            print(tDate)
-            if month == 2 and day > 28:
+            if month == 2 and day > 28:                                            #if the day is 29 or more on february make it 28
                 tempDay = 28
-                tDate = datetime.date(year, month, tempDay)
-                tempTransaction = Transaction(transaction.transactionName, transaction.transactionType, transaction.amount, str(tDate), transaction.categoryId)
-                Transaction.checkRecurringTransactions(tempTransaction)
-            elif month == 4 or month == 6 or month == 9 or month == 11 and day == 31:
+                tempDate = datetime.date(year, month, tempDay)
+                tempTransaction = Transaction(transaction.transactionName, transaction.transactionType, transaction.amount, str(tempDate), transaction.categoryId)
+                Transaction.checkRecurringTransactions(tempTransaction)             #check if the transaction has been already added to the db, if not add it 
+            elif (day == 31) and (month == 4 or month == 6 or month == 9 or month == 11):      #if day is 31, make it 30 on these months
                 tempDay = 30
-                tDate = datetime.date(year, month, tempDay)
-                tempTransaction = Transaction(transaction.transactionName, transaction.transactionType, transaction.amount, str(tDate), transaction.categoryId)
+                tempDate = datetime.date(year, month, tempDay)
+                tempTransaction = Transaction(transaction.transactionName, transaction.transactionType, transaction.amount, str(tempDate), transaction.categoryId)
                 Transaction.checkRecurringTransactions(tempTransaction)
-            else:
-                tDate = datetime.date(year, month, day)
-                tempTransaction = Transaction(transaction.transactionName, transaction.transactionType, transaction.amount, str(tDate), transaction.categoryId)
+            else:                                                                   #for 31 day months check if the transaction has been already added to the db, if not add it 
+                tempDate = datetime.date(year, month, day)
+                tempTransaction = Transaction(transaction.transactionName, transaction.transactionType, transaction.amount, str(tempDate), transaction.categoryId)
                 Transaction.checkRecurringTransactions(tempTransaction)
 
     def checkRecurringTransactions(transaction):
         with conn:
             cursor.execute('SELECT * FROM "transaction" WHERE transaction_name=:transaction_name AND transaction_type=:transaction_type AND amount=:amount AND transaction_date=:transaction_date AND category_id=:category_id', {'transaction_name':transaction.transactionName, 'transaction_type':transaction.transactionType, 'amount':transaction.amount, 'transaction_date':transaction.date, 'category_id':transaction.categoryId})
         row = cursor.fetchone()
-        if row == None:
-             Transaction.createTransactionByCategoryId(transaction, transaction.categoryId)
-        else:
+        if row == None:                                                             #if the transaction doesnt exist, create it
+            print("Transaction added!!!")
+            Transaction.createTransactionByCategoryId(transaction, transaction.categoryId)
+        else:                                                                       #if the transaction exists from a previous call of the recurring transaction just print a message, dont add it 
            print("Transaction already exists")
 
     def getTransactionByTransactionId(transactionId):
