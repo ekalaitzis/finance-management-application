@@ -29,6 +29,7 @@ CREATE TABLE "transaction"
     transaction_type    TEXT NOT NULL CHECK(transaction_type IN ('INCOME', 'EXPENSE')),
     amount              REAL NOT NULL CHECK(amount >= 0),
     transaction_date    TEXT NOT NULL,
+    is_recurring        TEXT CHECK(is_recurring IN ('YES', 'NO')),
     category_id         INTEGER NOT NULL,
         FOREIGN KEY (category_id)
             REFERENCES category (category_id)
