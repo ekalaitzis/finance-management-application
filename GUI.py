@@ -19,6 +19,8 @@ flr_date_to= datetime.datetime.today().date()
 flr_date_from= flr_date_to.replace(day=1)
 flr_date_to = flr_date_to.strftime("%d-%m-%Y")
 flr_date_from = flr_date_from.strftime("%d-%m-%Y")
+selected_item_from_table = None
+selected_values_from_table = None
 # =========================
 # functions
 # =========================
@@ -40,7 +42,7 @@ def show_dashboard():
         global user_ID_number
         user_ID_number= user_information[0]
         login_fr.pack_forget()
-        main.geometry("1200x800")
+        main.geometry("1200x600")
         dashboard_fr.pack(fill="both", expand=True)
         name_lbl.configure(text="Name: "+ user_information[1] + " " + user_information[2])
         username_lbl.configure(text= "Username: " + user_information[3] )
@@ -59,15 +61,18 @@ def show_dashboard():
 
 def show_overview():
     overview_fr.tkraise()
-
-def show_account():
-    account_fr.tkraise()
+    for widget in top_right_side_fr.winfo_children():
+        widget.destroy()
+    chart.income_vrs_expenses(top_right_side_fr, user_ID_number)
 
 def show_income():
     income_fr.tkraise()
 
 def show_expenses():
-    expenses_fr.tkraise()
+    for widget in top_right_side_fr.winfo_children():
+        widget.destroy()
+    chart.expenses_pie_chart(top_right_side_fr,user_ID_number)
+    collect_all_expenses_per_user(user_ID_number,flr_date_from,flr_date_to)
 
 def show_subscription():
     subscription_fr.tkraise()
@@ -140,6 +145,20 @@ def collect_all_transactions_per_user (user_id,date_from,date_to):
 #    print(overview_transactions_list)
 #    print ( "DATE FROM " +str (date_from) + "TO " +str (date_to))
 
+def collect_all_expenses_per_user (user_id, date_from,date_to):
+    global overview_transactions_list
+    overview_transactions_list.clear()
+    iso_date_from = datetime.datetime.strptime(date_from, "%d-%m-%Y").strftime("%Y-%m-%d")
+    iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")
+    overview_transactions_list.extend(be.Transaction.getAllTransactionsByMemberIdFilterDate(user_id,iso_date_from,iso_date_to))
+    overview_transactions_list = [(t[0],t[1],t[2],datetime.datetime.strptime(t[3], "%Y-%m-%d").strftime("%d-%m-%Y"),t[4]) for t in overview_transactions_list]
+    for item in left_table.get_children():
+        left_table.delete(item)
+    for row_row in overview_transactions_list:
+        if row_row [1] == "INCOME":
+            continue
+        left_table.insert("", "end", values=row_row)
+
 
 
 def add_transaction():
@@ -180,6 +199,25 @@ def filter_button_refresh ():
     flr_date_to = date_to_ENTRY.get()
     collect_all_transactions_per_user(user_ID_number,flr_date_from,flr_date_to)
 
+def left_click(event):
+    item = left_table.identify_row(event.y)
+    left_table.selection_set(item)
+
+def right_click (event):
+    global selected_item_from_table , selected_values_from_table
+    selected_item_from_table = left_table.identify_row(event.y)
+    if not selected_item_from_table:
+        return
+
+
+    left_table.selection_set(selected_item_from_table)
+    selected_values_from_table = left_table.item(selected_item_from_table , "values")
+    right_click_menu.post(event.x_root, event.y_root)
+
+def delete_item():
+    print (selected_values_from_table)
+def edit_item():
+    pass
 
 # =========================
 # Main Window
@@ -327,7 +365,7 @@ flt_button_apply.grid (row=0 , column=4 , padx= 2, pady = 5)
 # =========================
 # Content Frame
 # =========================
-basic_fr= tk.Frame (dashboard_fr, width=1200 , height=700,bg= "black")
+basic_fr= tk.Frame (dashboard_fr, width=1200 , height=500,bg= "black")
 basic_fr.pack_propagate(False)
 basic_fr.pack(fill= "both", expand=True)
 
@@ -335,14 +373,13 @@ basic_fr.pack(fill= "both", expand=True)
 # Overview Frame
 # =========================
 
-overview_fr= tk.Frame (basic_fr, width=1200 , height=700)
+overview_fr= tk.Frame (basic_fr, width=1200 , height=500)
 overview_fr.grid_propagate(False)
 overview_fr.grid(row=0, column=0, sticky="nsew")
 overview_fr.columnconfigure(0,weight=3,uniform="group1")
 overview_fr.columnconfigure(1,weight=1,uniform="group1")
 overview_fr.columnconfigure(2,weight=1,uniform="group1")
 overview_fr.rowconfigure(0, weight=1)
-overview_fr.rowconfigure(1, weight=1)
 overview_fr.tkraise()
 
 left_side_fr=tk.Frame(overview_fr)
@@ -373,13 +410,21 @@ left_table.configure(xscrollcommand=scrollbar_x.set)
 scrollbar_y.grid(row=0,column=1, sticky= "ns")
 scrollbar_x.grid(row=1,column=0, sticky= "ew")
 
+left_table.bind("<ButtonRelease-1>", left_click)
+left_table.bind("<Button-3>", right_click)
+
+right_click_menu = tk.Menu(overview_fr, tearoff=0)
+
+right_click_menu.add_command(label="Edit", command=lambda: edit_item())
+right_click_menu.add_command(label="Delete", command=lambda: delete_item())
+
 
 for row in overview_transactions_list:
     left_table.insert("","end", values=row )
 
 left_table.grid(row= 0 , column= 0 , sticky= "nsew")
 
-# future pie chart
+# bar chart
 top_right_side_fr=tk.Frame(overview_fr)
 top_right_side_fr.grid(row=0, column = 1, columnspan=2, sticky="nsew")
 top_right_side_fr.grid_rowconfigure(0, weight=1)
@@ -425,22 +470,33 @@ transaction_category_lbl.grid(row=4,column=0,sticky="nw", padx=5, pady=5)
 transaction_category_entry.grid(row=4,column=1,sticky="ne", padx=5, pady=5)
 transaction_add_button.grid(row=5,column=1,sticky="ne", padx=5, pady=5)
 
+
 # =========================
 # expenses Frame
 # =========================
-expenses_fr= tk.Frame (basic_fr, width=1200 , height=650 , bg="red")
+
+expenses_fr= tk.Frame (basic_fr, width=1200 , height=500 , bg="red")
 expenses_fr.grid_propagate(False)
 expenses_fr.grid(row=0, column=0, sticky="nsew")
+
+expenses_fr.columnconfigure(0,weight=3,uniform="group1")
+expenses_fr.columnconfigure(1,weight=1,uniform="group1")
+expenses_fr.columnconfigure(2,weight=1,uniform="group1")
+expenses_fr.rowconfigure(0, weight=1)
+expenses_fr.rowconfigure(1, weight=1)
+
+
+
 # =========================
 # income Frame
 # =========================
-income_fr= tk.Frame (basic_fr, width=1200 , height=650 , bg="blue")
+income_fr= tk.Frame (basic_fr, width=1200 , height=500 , bg="blue")
 income_fr.grid_propagate(False)
 income_fr.grid(row=0, column=0, sticky="nsew")
 # =========================
 # subscription Frame
 # =========================
-subscription_fr= tk.Frame (basic_fr, width=1200 , height=650 , bg="green")
+subscription_fr= tk.Frame (basic_fr, width=1200 , height=500 , bg="green")
 subscription_fr.grid_propagate(False)
 subscription_fr.grid(row=0, column=0, sticky="nsew")
 
