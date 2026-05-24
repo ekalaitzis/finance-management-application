@@ -264,7 +264,6 @@ class Transaction:
             except sqlite3.OperationalError as e:
                 print(f"OperationalError: {e}")
 
-
     def addRecurringTransaction(transaction):    
         datex = str(transaction.date)
         year = int(datex[0:4])
@@ -275,6 +274,10 @@ class Transaction:
         print(f"{tDate} vs \n {currDate}")
         while tDate < currentDate:
             month += 1
+            if month == 13:
+                month = 1
+                year += 1
+            print(tDate)
             if month == 2 and day > 28:
                 tempDay = 28
                 tDate = datetime.date(year, month, tempDay)
@@ -291,14 +294,13 @@ class Transaction:
                 Transaction.checkRecurringTransactions(tempTransaction)
 
     def checkRecurringTransactions(transaction):
-        transactions = Transaction.getAllTransactionsByCategoryId(transaction.categoryId)
-        for current in transactions:
-            print(current)            
-            if transaction.transactionName == current[1] and transaction.transactionType == current[2] and transaction.amount == current[3]:
-                if transaction.date == current[4]:
-                    print(f"transaction {transaction.transactionName} is already in the db")
-                else:
-                    Transaction.createTransactionByCategoryId(transaction, transaction.categoryId)
+        with conn:
+            cursor.execute('SELECT * FROM "transaction" WHERE transaction_name=:transaction_name AND transaction_type=:transaction_type AND amount=:amount AND transaction_date=:transaction_date AND category_id=:category_id', {'transaction_name':transaction.transactionName, 'transaction_type':transaction.transactionType, 'amount':transaction.amount, 'transaction_date':transaction.date, 'category_id':transaction.categoryId})
+        row = cursor.fetchone()
+        if row == None:
+             Transaction.createTransactionByCategoryId(transaction, transaction.categoryId)
+        else:
+           print("Transaction already exists")
 
     def getTransactionByTransactionId(transactionId):
         with conn:
@@ -545,7 +547,8 @@ def menu():
                 id = int(input("Select member id:"))
                 Transaction.getAllTransactionsByMemberIdGroupedByCategory(id)
             elif choice == '20':
-                Transaction.checkRecurringTransactions(Transaction.getTransactionByTransactionId(1))
+                id = int(input("Select member id:"))
+                Transaction.addRecurringTransaction(Transaction.getTransactionByTransactionId(id))
             elif choice == '0':
                 print("Bye!")
                 break
