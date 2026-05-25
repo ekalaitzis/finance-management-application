@@ -306,7 +306,22 @@ class Transaction:
             return Transaction(row[1], row[2], row[3], row[4], row[6], row[5], row[0])
             #return row
         
-    def getAllTransactionsByMemberId(memberId):
+    
+    def setDate(fromDate):
+        if fromDate == None:
+            strDate = str(currentDate)                                             #convert transaction date to string
+            year = int(strDate[0:4])
+            month = int(strDate[5:7]) - 1
+            day = int(strDate[8:10])                                                    
+            tempDate = datetime.date(year, month, day) 
+            return tempDate
+        else:
+            return fromDate
+
+    def getAllTransactionsByMemberId(memberId, fromDate=None, tillDate=None):
+        Transaction.setDate(fromDate)
+        if tillDate == None:
+            tillDate = currentDate
         tempMember = Member.getMemberByMemberId(memberId)
         if tempMember == None:
             return []
@@ -314,7 +329,11 @@ class Transaction:
             user = tempMember.username
             try:
                 with conn:
-                    cursor.execute('SELECT "transaction".transaction_name, "transaction".transaction_type, "transaction".amount, "transaction".transaction_date, category.category_name FROM "transaction" JOIN category ON "transaction".category_id = category.category_id WHERE category.member_id=:member_id', {'member_id': memberId})
+                    cursor.execute('''SELECT "transaction".transaction_id, "transaction".transaction_name, "transaction".transaction_type, "transaction".amount, "transaction".transaction_date,"transaction".is_recurring, category.category_id, category.category_name, category.member_id
+                        FROM "transaction"
+                        JOIN category
+                        ON "transaction".category_id = category.category_id
+                        WHERE category.member_id=:member_id AND "transaction".transaction_date BETWEEN :fromDate AND :tillDate''', {'member_id': memberId, 'fromDate':fromDate, 'tillDate': tillDate})
                 transactions = cursor.fetchall()
                 print(f"Here are the transactions of the {user}. \n {transactions}")
                 return transactions
@@ -324,7 +343,10 @@ class Transaction:
                 return []
                 # return False
 
-    def getAllAmountByMemberIdFilterByTransactionType(memberId,transactionType):                    #method to get the total amount of income or expenses of a user 
+    def getAllAmountByMemberIdFilterByTransactionType(memberId,transactionType, fromDate=None, tillDate=None):                    #method to get the total amount of income or expenses of a user 
+        Transaction.setDate(fromDate)
+        if tillDate == None:
+            tillDate = currentDate
         tempMember = Member.getMemberByMemberId(memberId)
         if tempMember == None:
             return 0
@@ -332,17 +354,30 @@ class Transaction:
             user = tempMember.username
             try:
                 with conn:
-                    cursor.execute('SELECT SUM("transaction".amount) AS total_amount FROM "transaction" JOIN category ON "transaction".category_id = category.category_id WHERE category.member_id=:member_id AND "transaction".transaction_type =:transaction_type',
-                                    {'member_id': memberId, 'transaction_type': transactionType})
-                total = cursor.fetchone()[0]
-                return total if total is not  None else 0 # need this in case the user still doesnt have any income or expense
+                    cursor.execute('''SELECT SUM("transaction".amount) AS total_amount FROM "transaction" JOIN category 
+                                   ON "transaction".category_id = category.category_id 
+                                   WHERE category.member_id=:member_id 
+                                   AND "transaction".transaction_type =:transaction_type
+                                   AND "transaction".transaction_date 
+                                   BETWEEN :fromDate 
+                                   AND :tillDate''',  
+                                    {'member_id': memberId, 'transaction_type': transactionType, 'fromDate':fromDate, 'tillDate': tillDate})
+                total = cursor.fetchone()
+                total = total[0]
+                if total == None:
+                    return 0
+                else:
+                    return total 
                 # return True
             except sqlite3.IntegrityError:
                 print("This action is restricted, check if all the fields are valid and try again.")
                 return 0
                 # return False
         
-    def getAllTransactionsByMemberIdFilterDate(memberId,fromDate, tillDate):
+    def getAllTransactionsByMemberIdFilterDate(memberId,fromDate, tillDate): #deprecated use -> getAllTransactionsByMemberId()
+        Transaction.setDate(fromDate)
+        if tillDate == None:
+            tillDate = currentDate
         tempMember = Member.getMemberByMemberId(memberId)
         if tempMember == None:
             return None
@@ -361,22 +396,27 @@ class Transaction:
                 return []
                 # return False
 
-    def getAllTransactionsByCategoryId(categoryId):                 # method to get all transactions of a member from the db
+    def getAllTransactionsByCategoryId(categoryId, fromDate=None, tillDate=None):                 # method to get all transactions of a member from the db
+        Transaction.setDate(fromDate)
+        if tillDate == None:
+            tillDate = currentDate
         tempCategory = Category.getCategoryByCategoryId(categoryId)
         if tempCategory == None:
             return None
         else:    
             try:
                 with conn:
-                    cursor.execute('SELECT * FROM "transaction" WHERE category_id=:category_id', {'category_id': categoryId})
+                    cursor.execute('''SELECT * FROM "transaction" 
+                        WHERE category_id=:category_id 
+                        AND "transaction".transaction_date 
+						BETWEEN :fromDate 
+						AND :tillDate''', {'category_id': categoryId, 'fromDate':fromDate, 'tillDate': tillDate})
                 transactions = cursor.fetchall()
                 print(f"Here are the transactions of the {tempCategory.categoryName}. \n {transactions}")
                 return transactions
-                # return True
             except sqlite3.IntegrityError:
                 print("This action is restricted, check if all the fields are valid and try again.")
                 return []
-                return False
 
     def UpdateTransactionByTransactionId(transactionId,updatedTransaction):             # method to edit a transaction of a member from the db
         tempTransaction = Transaction.getTransactionByTransactionId(transactionId)
@@ -395,7 +435,7 @@ class Transaction:
             except sqlite3.IntegrityError:
                 print("Transaction:This action is restricted, check if all the fields are valid and try again.")
                 return False
-
+            
     def deleteTransactionByTransactionId(transactionId):             # method to delete a transaction of a member from the db
         tempTransaction = Transaction.getTransactionByTransactionId(transactionId)
         if tempTransaction == None:                                  # no category found to be deleted
@@ -410,7 +450,10 @@ class Transaction:
                 print("Failed to delete")                       
                 return False
     
-    def getAllTransactionsByMemberIdFilterByType(memberId,transactionType):     #This method can be used to get all the expenses or income of a user
+    def getAllTransactionsByMemberIdFilterByType(memberId,transactionType, fromDate=None, tillDate=None):     #This method can be used to get all the expenses or income of a user
+        Transaction.setDate(fromDate)
+        if tillDate == None:
+            tillDate = currentDate
         tempMember = Member.getMemberByMemberId(memberId)
         if tempMember == None:
             return None
@@ -418,7 +461,13 @@ class Transaction:
             user = tempMember.username
             try:
                 with conn:
-                    cursor.execute('SELECT "transaction".transaction_name, "transaction".amount, "transaction".transaction_date, category.category_name FROM "transaction" JOIN category ON "transaction".category_id = category.category_id WHERE category.member_id=:member_id AND "transaction".transaction_type =:transaction_type', {'member_id': memberId,'transaction_type':transactionType})
+                    cursor.execute('''SELECT "transaction".transaction_name, "transaction".amount, "transaction".transaction_date, category.category_name 
+                                   FROM "transaction" JOIN category ON "transaction".category_id = category.category_id 
+                                   WHERE category.member_id=:member_id 
+                                   AND "transaction".transaction_type =:transaction_type
+                                   AND "transaction".transaction_date 
+                                   BETWEEN :fromDate 
+                                   AND :tillDate''', {'member_id': memberId,'transaction_type':transactionType, 'fromDate':fromDate, 'tillDate': tillDate})
                 transactions = cursor.fetchall()
                 print(f"Here are the {transactionType} transactions of the {user}. \n {transactions}")
                 return transactions
@@ -428,7 +477,10 @@ class Transaction:
                 return []
                 return False
 
-    def getAllTransactionsByMemberIdGroupedByCategory(memberId, transactionType):
+    def getAllTransactionsByMemberIdGroupedByCategory(memberId, transactionType, fromDate=None, tillDate=None):
+        Transaction.setDate(fromDate)
+        if tillDate == None:
+            tillDate = currentDate
         tempMember = Member.getMemberByMemberId(memberId)
         if tempMember == None:
             return None
@@ -436,15 +488,19 @@ class Transaction:
             user = tempMember.username
             try:
                 with conn:
-                    cursor.execute('SELECT category.category_name, "transaction".amount FROM "transaction" JOIN category ON "transaction".category_id = category.category_id WHERE category.member_id=:member_id AND "transaction".transaction_type =:transaction_type', {'member_id': memberId,'transaction_type':transactionType})
+                    cursor.execute('''SELECT category.category_id, category.category_name, "transaction".amount FROM "transaction" JOIN category ON "transaction".category_id = category.category_id 
+                                   WHERE category.member_id=:member_id 
+                                   AND "transaction".transaction_type =:transaction_type
+                                   AND "transaction".transaction_date 
+						           BETWEEN :fromDate 
+						           AND :tillDate
+                                   GROUP BY category.category_name''', {'member_id': memberId,'transaction_type':transactionType, 'fromDate':fromDate, 'tillDate': tillDate})
                 transactions = cursor.fetchall()
                 print(f"Here are the transactions of each category of the {user}. \n {transactions}")
                 return transactions
-                # return True
             except sqlite3.IntegrityError:
                 print("This action is restricted, check if all the fields are valid and try again.")
                 return []
-                # return False
                 
     def getTotalByMemberId(memberId):
         income = Transaction.getAllAmountByMemberIdFilterByTransactionType(memberId, "INCOME")

@@ -136,8 +136,8 @@ def collect_all_transactions_per_user (user_id,date_from,date_to):
     overview_transactions_list.clear()
     iso_date_from = datetime.datetime.strptime(date_from, "%d-%m-%Y").strftime("%Y-%m-%d")
     iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")
-    overview_transactions_list.extend(be.Transaction.getAllTransactionsByMemberIdFilterDate(user_id,iso_date_from,iso_date_to))
-    overview_transactions_list = [(t[0],t[1],t[2],datetime.datetime.strptime(t[3], "%Y-%m-%d").strftime("%d-%m-%Y"),t[4]) for t in overview_transactions_list]
+    overview_transactions_list.extend(be.Transaction.getAllTransactionsByMemberId(user_id,iso_date_from,iso_date_to))
+    overview_transactions_list = [(t[1],t[2],t[3],datetime.datetime.strptime(t[4], "%Y-%m-%d").strftime("%d-%m-%Y"),t[7]) for t in overview_transactions_list]
     for item in left_table.get_children():
         left_table.delete(item)
     for row_row in overview_transactions_list:
@@ -150,12 +150,12 @@ def collect_all_expenses_per_user (user_id, date_from,date_to):
     overview_transactions_list.clear()
     iso_date_from = datetime.datetime.strptime(date_from, "%d-%m-%Y").strftime("%Y-%m-%d")
     iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")
-    overview_transactions_list.extend(be.Transaction.getAllTransactionsByMemberIdFilterDate(user_id,iso_date_from,iso_date_to))
-    overview_transactions_list = [(t[0],t[1],t[2],datetime.datetime.strptime(t[3], "%Y-%m-%d").strftime("%d-%m-%Y"),t[4]) for t in overview_transactions_list]
+    overview_transactions_list.extend(be.Transaction.getAllTransactionsByMemberId(user_id,iso_date_from,iso_date_to))
+    overview_transactions_list = [(t[1],t[2],t[3],datetime.datetime.strptime(t[4], "%Y-%m-%d").strftime("%d-%m-%Y"),t[7]) for t in overview_transactions_list]
     for item in left_table.get_children():
         left_table.delete(item)
     for row_row in overview_transactions_list:
-        if row_row [1] == "INCOME":
+        if row_row [2] == "INCOME":
             continue
         left_table.insert("", "end", values=row_row)
 
@@ -214,8 +214,9 @@ def right_click (event):
     selected_values_from_table = left_table.item(selected_item_from_table , "values")
     right_click_menu.post(event.x_root, event.y_root)
 
-def delete_item():
+def delete_item(id):
     print (selected_values_from_table)
+ #   be.Transaction.deleteTransactionByTransactionId(id)
 def edit_item():
     pass
 
@@ -416,7 +417,7 @@ left_table.bind("<Button-3>", right_click)
 right_click_menu = tk.Menu(overview_fr, tearoff=0)
 
 right_click_menu.add_command(label="Edit", command=lambda: edit_item())
-right_click_menu.add_command(label="Delete", command=lambda: delete_item())
+right_click_menu.add_command(label="Delete", command=lambda: delete_item(1))
 
 
 for row in overview_transactions_list:
