@@ -222,12 +222,12 @@ class Category:
                 return False
 
 class Transaction:
-    def __init__(self, transactionName, transactionType, amount, date, categoryId, isRecurring="NO", transactionId=None):
+    def __init__(self, transactionName, transactionType, amount, date, categoryId, isRecurring, transactionId=None):
         self.transactionId = transactionId
         self.transactionName = transactionName
         self.transactionType = transactionType
         self.amount = amount
-        self.date = date        # this should set to get current date and time maybe timestamp
+        self.date = date
         self.isRecurring = isRecurring
         self.categoryId = categoryId
 
@@ -244,19 +244,14 @@ class Transaction:
         if tempCategory == None:
             return False
         else:
-            print(self.transactionId)
-            print(self.transactionName)
-            print(self.transactionType)
-            print(self.amount)
-            print(self.date)
-            print(self.isRecurring)
-            print(self.categoryId)
             try:
                 with conn:
                     cursor.execute('INSERT INTO "transaction" (transaction_name, transaction_type, amount, transaction_date, is_recurring, category_id) VALUES (?, ?, ?, ?, ?, ?)',
                                    (self.transactionName, self.transactionType ,self.amount ,self.date, self.isRecurring ,categoryId))
                     print(f"Transaction added! \n{self.transactionName} \n{self.transactionType}\n{self.amount}\n{self.date}\nto:\n{tempCategory}")
                     conn.commit()
+                    if self.isRecurring:
+                        Transaction.addRecurringTransaction(self)
                     return True
             except sqlite3.IntegrityError:
                 print("This action is restricted, check if all the fields are valid and try again.")
@@ -278,19 +273,19 @@ class Transaction:
             if month == 2 and day > 28:                                            #if the day is 29 or more on february make it 28
                 tempDay = 28
                 tempDate = datetime.date(year, month, tempDay)
-                tempTransaction = Transaction(transaction.transactionName, transaction.transactionType, transaction.amount, str(tempDate), transaction.categoryId)
-                Transaction.checkRecurringTransactions(tempTransaction)             #check if the transaction has been already added to the db, if not add it 
+                tempTransaction = Transaction(transaction.transactionName, transaction.transactionType, transaction.amount, str(tempDate), transaction.categoryId, transaction.isRecurring)
+                Transaction.checkRecurringTransactions(tempTransaction)             #check if the transaction has been already added to the db, if not add it
             elif (day == 31) and (month == 4 or month == 6 or month == 9 or month == 11):      #if day is 31, make it 30 on these months
                 tempDay = 30
                 tempDate = datetime.date(year, month, tempDay)
-                tempTransaction = Transaction(transaction.transactionName, transaction.transactionType, transaction.amount, str(tempDate), transaction.categoryId)
+                tempTransaction = Transaction(transaction.transactionName, transaction.transactionType, transaction.amount, str(tempDate), transaction.categoryId, transaction.isRecurring)
                 Transaction.checkRecurringTransactions(tempTransaction)
             else:                                                                   #for 31 day months check if the transaction has been already added to the db, if not add it 
                 tempDate = datetime.date(year, month, day)
-                tempTransaction = Transaction(transaction.transactionName, transaction.transactionType, transaction.amount, str(tempDate), transaction.categoryId)
+                tempTransaction = Transaction(transaction.transactionName, transaction.transactionType, transaction.amount, str(tempDate), transaction.categoryId, transaction.isRecurring)
                 Transaction.checkRecurringTransactions(tempTransaction)
 
-    def checkRecurringTransactions(transaction):
+    def checkRecurringTransactions(transaction):                                    #this method checks if there the recuring transaction has run before, if not add it in the db, otherwise it just skips
         with conn:
             cursor.execute('SELECT * FROM "transaction" WHERE transaction_name=:transaction_name AND transaction_type=:transaction_type AND amount=:amount AND transaction_date=:transaction_date AND category_id=:category_id', {'transaction_name':transaction.transactionName, 'transaction_type':transaction.transactionType, 'amount':transaction.amount, 'transaction_date':transaction.date, 'category_id':transaction.categoryId})
         row = cursor.fetchone()
@@ -308,8 +303,8 @@ class Transaction:
             print(f"No category found with id: {transactionId}.")
             return None
         else:
-            print(Transaction(row[1], row[2], row[3], row[4], row[6], row[5], row[0]))
             return Transaction(row[1], row[2], row[3], row[4], row[6], row[5], row[0])
+            #return row
         
     def getAllTransactionsByMemberId(memberId):
         tempMember = Member.getMemberByMemberId(memberId)
@@ -393,7 +388,10 @@ class Transaction:
                     cursor.execute('UPDATE "transaction" SET transaction_name=:transaction_name, transaction_type=:transaction_type, amount=:amount, transaction_date=:transaction_date, category_id=:category_id  WHERE transaction_id=:transactionId',
                     {'transaction_name':updatedTransaction.transactionName, 'transaction_type':updatedTransaction.transactionType,  'amount':updatedTransaction.amount, 'transaction_date':updatedTransaction.date, 'category_id':updatedTransaction.categoryId, 'transactionId':transactionId})
                 print(f"Updated transaction name to:{tempTransaction.transactionName}.")
-                return True                                
+                transaction = cursor.fetchone
+                if updatedTransaction.isRecurring:
+                        Transaction.addRecurringTransaction(updatedTransaction)
+                return transaction              
             except sqlite3.IntegrityError:
                 print("Transaction:This action is restricted, check if all the fields are valid and try again.")
                 return False
