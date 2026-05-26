@@ -2,17 +2,21 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import Financial as be
 import matplotlib.ticker as ticker
-
+import datetime
 
 # =========================
 # Pie chart
 # =========================
 
-def expenses_pie_chart (frame,user_id):
+def expenses_pie_chart (frame,user_id,date_from, date_to):
     for widget in frame.winfo_children():
         widget.destroy()
 
-    all_expenses_transactions = be.Transaction.getAllTransactionsByMemberIdFilterByType(user_id,"EXPENSE",None,None)
+
+    iso_date_from = datetime.datetime.strptime(date_from, "%d-%m-%Y").strftime("%Y-%m-%d")
+    iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")
+
+    all_expenses_transactions = be.Transaction.getAllTransactionsByMemberIdFilterByType(user_id,"EXPENSE",iso_date_from, iso_date_to)
     total_amount_per_category={}
     for name,amount,date,categories in all_expenses_transactions:
         if categories in total_amount_per_category:
@@ -39,12 +43,14 @@ def expenses_pie_chart (frame,user_id):
 # Bar chart
 # =========================
 
-def income_vrs_expenses(frame,user_id):
+def income_vrs_expenses(frame,user_id,date_from, date_to):
     for widget in frame.winfo_children():
         widget.destroy()
 
-    total_income= be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_id,"INCOME",None,None)
-    total_expenses=be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_id,"EXPENSE",None,None)
+    iso_date_from = datetime.datetime.strptime(date_from, "%d-%m-%Y").strftime("%Y-%m-%d")
+    iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")
+    total_income= be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_id,"INCOME",iso_date_from, iso_date_to)
+    total_expenses=be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_id,"EXPENSE",iso_date_from, iso_date_to)
 
 
     money_type= ["Expenses","Income"]

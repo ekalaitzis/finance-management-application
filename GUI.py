@@ -33,17 +33,24 @@ def show_login():
     main.geometry("400x200")
     login_fr.pack()
 
+def get_total_amount (userid, type_of_tr,date_from, date_to):
+    iso_date_from = datetime.datetime.strptime(date_from, "%d-%m-%Y").strftime("%Y-%m-%d")
+    iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")
+    total_amount=be.Transaction.getAllAmountByMemberIdFilterByTransactionType(userid, type_of_tr, iso_date_from, iso_date_to)
+    return total_amount
+
+
 def overview_refresh ():
-    global user_ID_number
+    global user_ID_number, flr_date_from, flr_date_to
 
     if user_ID_number == 0:
         return
 
-    income_amount.configure(text= "Income: " + str(be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_ID_number,"INCOME", None, None)))
-    expenses_amount.configure(text= "Expenses: " + str(be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_ID_number,"EXPENSE", None, None)))
+    income_amount.configure(text= "Income: " + str(get_total_amount(user_ID_number,"INCOME", flr_date_from, flr_date_to)))
+    expenses_amount.configure(text= "Expenses: " + str(get_total_amount(user_ID_number,"EXPENSE", flr_date_from, flr_date_to)))
     transaction_form.collect_category_per_user(user_ID_number)
     transaction_table.collect_all_transactions_per_user(user_ID_number, flr_date_from, flr_date_to)
-    chart.income_vrs_expenses(overview_fr.top_right_side_fr, user_ID_number)
+    chart.income_vrs_expenses(overview_fr.top_right_side_fr, user_ID_number,flr_date_from, flr_date_to)
     transaction_form.user_id = user_ID_number
 
 def expenses_refresh ():
@@ -52,11 +59,11 @@ def expenses_refresh ():
     if user_ID_number == 0:
         return
 
-    income_amount.configure(text= "Income: " + str(be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_ID_number,"INCOME", None, None)))
-    expenses_amount.configure(text= "Expenses: " + str(be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_ID_number,"EXPENSE", None, None)))
+    income_amount.configure(text= "Income: " + str(get_total_amount(user_ID_number,"INCOME", flr_date_from, flr_date_to)))
+    expenses_amount.configure(text= "Expenses: " + str(get_total_amount(user_ID_number,"EXPENSE", flr_date_from, flr_date_to)))
     transaction_form.collect_category_per_user(user_ID_number)
     #transaction_table.collect_type_transaction_per_user(user_ID_number , choose_type= "EXPENSE")
-    chart.expenses_pie_chart(expenses_fr.top_right_side_fr, user_ID_number)
+    chart.expenses_pie_chart(expenses_fr.top_right_side_fr, user_ID_number, flr_date_from, flr_date_to)
     transaction_form.user_id = user_ID_number
     chart.daily_spend(expenses_fr.btm_right_side_fr)
     transaction_table.collect_all_transactions_per_user(user_ID_number, flr_date_from, flr_date_to) # to be removed
@@ -138,9 +145,11 @@ def add_transaction(data):
 
 
 def filter_button_refresh ():
-    global flr_date_from , flr_date_to
+    global flr_date_from , flr_date_to ,user_ID_number
     flr_date_from = date_from_ENTRY.get()
     flr_date_to = date_to_ENTRY.get()
+    income_amount.configure(text= "Income: " + str(get_total_amount(user_ID_number,"INCOME", flr_date_from, flr_date_to)))
+    expenses_amount.configure(text= "Expenses: " + str(get_total_amount(user_ID_number,"EXPENSE", flr_date_from, flr_date_to)))
     transaction_table.collect_all_transactions_per_user(user_ID_number,flr_date_from,flr_date_to)
 
 
@@ -226,11 +235,11 @@ class Show_transactions (tk.Frame):
         self.transactions_data = [(t[0], t[1], t[2], datetime.datetime.strptime(t[3], "%Y-%m-%d").strftime("%d-%m-%Y"), t[4]) for t in self.transactions_data]
         self.load_data()
 
-    def collect_type_transaction_per_user (self, user_id, choose_type): # need to add the dates once the function is ready
+    def collect_type_transaction_per_user (self, user_id, choose_type,date_from, date_to): # need to add the dates once the function is ready
         self.transactions_data.clear()
-        #iso_date_from = datetime.datetime.strptime(date_from, "%d-%m-%Y").strftime("%Y-%m-%d")     will be added later
-        #iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")         will be added later
-        self.transactions_data.extend(be.Transaction.getAllTransactionsByMemberIdFilterByType(user_id, choose_type, None, None))
+        iso_date_from = datetime.datetime.strptime(date_from, "%d-%m-%Y").strftime("%Y-%m-%d")
+        iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")
+        self.transactions_data.extend(be.Transaction.getAllTransactionsByMemberIdFilterByType(user_id, choose_type, iso_date_from, iso_date_to))
         self.transactions_data = [(t[0], t[1], t[2], datetime.datetime.strptime(t[3], "%Y-%m-%d").strftime("%d-%m-%Y"), t[4]) for t in self.transactions_data]
         self.load_data()
 
@@ -278,7 +287,7 @@ class Transaction_form (tk.Frame):
         self.category_list = []
         self.is_recurring = tk.StringVar(value="NO")
 
-        self.transaction_title_label = tk.Label(register_fr, text="Add New Transaction", font=("arial", 14, "bold"), padx=5, pady=5)
+        self.transaction_title_label = tk.Label(self, text="Add New Transaction", font=("arial", 14, "bold"), anchor="center")
         self.transaction_name_lbl = tk.Label(self, text="Transaction:", width=15)
         self.transaction_name_entry = tk.Entry(self, textvariable=self.transaction_name_vr, width=30)
         self.transaction_type_lbl = tk.Label(self, text="Type:", width=15)
@@ -296,7 +305,7 @@ class Transaction_form (tk.Frame):
         self.is_recurring_lbl = tk.Label(self, text="Monthly recurring: ", width=15)
         self.is_recurring_checkbox =tk.Checkbutton (self,text= "YES" , variable=self.is_recurring, onvalue= "YES" , offvalue= "NO" )
 
-        self.transaction_title_label.grid (row=0, column=0, sticky="nsew", padx=2, pady=5 , columnspan= 2)
+        self.transaction_title_label.grid (row=0, column=0, sticky="nsew", padx=2, pady=15 , columnspan= 2)
         self.transaction_name_lbl.grid(row=1, column=0, sticky="nw", padx=2, pady=5)
         self.transaction_name_entry.grid(row=1, column=1, sticky="ne", padx=2, pady=5)
         self.transaction_type_lbl.grid(row=2, column=0, sticky="nw", padx=2, pady=5)
