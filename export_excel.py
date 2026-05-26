@@ -1,39 +1,53 @@
 import xlsxwriter
-import sqlite3
+from Financial import Transaction
 
-# Εξαγωγή συναλλαγών σε Excel
 
-def export_to_excel(filename="oikonomika_stoixeia.xlsx"):
+# Export συναλλαγών σε excel
 
-    conn = sqlite3.connect('Finance.db')
-    cursor = conn.cursor()
+def export_to_excel(member_id, from_date=None, to_date=None,
+                    filename="oikonomika_stoixeia.xlsx"):
 
-    sql_query = """
-    SELECT transaction_name, transaction_type, amount, date
-    FROM "transaction"
-    """
-
-    cursor.execute(sql_query)
-
-    transactions = cursor.fetchall()
+    transactions = Transaction.getAllTransactionsByMemberId(
+        member_id,
+        from_date,
+        to_date
+    )
 
     workbook = xlsxwriter.Workbook(filename)
 
     worksheet = workbook.add_worksheet("Συναλλαγές")
 
-    headers = ["Περιγραφή", "Τύπος", "Ποσό", "Ημερομηνία"]
+    headers = [
+        "Περιγραφή",
+        "Τύπος",
+        "Ποσό",
+        "Ημερομηνία",
+        "Κατηγορία"
+    ]
 
     for col, header in enumerate(headers):
         worksheet.write(0, col, header)
 
-    for row_num, row_data in enumerate(transactions, start=1):
-        for col_num, data in enumerate(row_data):
-            worksheet.write(row_num, col_num, data)
+    for row_num, transaction in enumerate(transactions, start=1):
+
+        transaction_name = transaction[1]
+        transaction_type = transaction[2]
+        amount = transaction[3]
+        date = transaction[4]
+        category_name = transaction[7]
+
+        worksheet.write(row_num, 0, transaction_name)
+        worksheet.write(row_num, 1, transaction_type)
+        worksheet.write(row_num, 2, amount)
+        worksheet.write(row_num, 3, date)
+        worksheet.write(row_num, 4, category_name)
 
     workbook.close()
 
-    conn.close()
+    print("Το αρχείο excel δημιουργήθηκε.")
 
-    print("Η εξαγωγή ολοκληρώθηκε!")
+    return filename
 
-export_to_excel()
+
+# Παράδειγμα χρήσης:
+# export_to_excel(1, "2026-05-01", "2026-05-31")
