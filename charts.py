@@ -17,6 +17,9 @@ def expenses_pie_chart (frame,user_id,date_from, date_to):
     iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")
 
     all_expenses_transactions = be.Transaction.getAllTransactionsByMemberIdFilterByType(user_id,"EXPENSE",iso_date_from, iso_date_to)
+    
+    #total_amount_per_category=be.Transaction.getAllTransactionsByMemberIdGroupedByCategory(user_id,"EXPENSE",iso_date_from, iso_date_to)
+
     total_amount_per_category={}
     for name,amount,date,categories in all_expenses_transactions:
         if categories in total_amount_per_category:
