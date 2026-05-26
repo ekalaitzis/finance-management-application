@@ -339,11 +339,9 @@ class Transaction:
                 transactions = cursor.fetchall()
                 print(f"Here are the transactions of the {user}. \n {transactions}")
                 return transactions
-                # return True
             except sqlite3.IntegrityError:
                 print("This action is restricted, check if all the fields are valid and try again.")
                 return []
-                # return False
 
     def getAllAmountByMemberIdFilterByTransactionType(memberId,transactionType, fromDate=None, tillDate=None):                    #method to get the total amount of income or expenses of a user 
         fromDate = Transaction.setDate(fromDate)
@@ -490,7 +488,7 @@ class Transaction:
             user = tempMember.username
             try:
                 with conn:
-                    cursor.execute('''SELECT category.category_id, category.category_name, "transaction".amount FROM "transaction" JOIN category ON "transaction".category_id = category.category_id 
+                    cursor.execute('''SELECT category.category_id, category.category_name, SUM("transaction".amount) FROM "transaction" JOIN category ON "transaction".category_id = category.category_id 
                                    WHERE category.member_id=:member_id 
                                    AND "transaction".transaction_type =:transaction_type
                                    AND "transaction".transaction_date 
