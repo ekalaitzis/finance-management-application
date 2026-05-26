@@ -4,6 +4,15 @@ finance2.db
 Ατομική έκθεση.txt
 financial.sql
 finance2.db-journal
+category.csv
+export.csv
+export2.csv
+export3.csv
+member.csv
+menu.py
+
+
+
 
 # Python cache files
 __pycache__/

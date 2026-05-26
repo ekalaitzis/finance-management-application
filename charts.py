@@ -12,7 +12,7 @@ def expenses_pie_chart (frame,user_id):
     for widget in frame.winfo_children():
         widget.destroy()
 
-    all_expenses_transactions = be.Transaction.getAllTransactionsByMemberIdFilterByType(user_id,"EXPENSE")
+    all_expenses_transactions = be.Transaction.getAllTransactionsByMemberIdFilterByType(user_id,"EXPENSE",None,None)
     total_amount_per_category={}
     for name,amount,date,categories in all_expenses_transactions:
         if categories in total_amount_per_category:
@@ -43,8 +43,8 @@ def income_vrs_expenses(frame,user_id):
     for widget in frame.winfo_children():
         widget.destroy()
 
-    total_income= be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_id,"INCOME")
-    total_expenses=be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_id,"EXPENSE")
+    total_income= be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_id,"INCOME",None,None)
+    total_expenses=be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_id,"EXPENSE",None,None)
 
 
     money_type= ["Expenses","Income"]

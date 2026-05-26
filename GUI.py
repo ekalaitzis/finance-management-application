@@ -39,8 +39,8 @@ def overview_refresh ():
     if user_ID_number == 0:
         return
 
-    income_amount.configure(text= "Income: " + str(be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_ID_number,"INCOME")) )
-    expenses_amount.configure(text= "Expenses: " + str(be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_ID_number,"EXPENSE")))
+    income_amount.configure(text= "Income: " + str(be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_ID_number,"INCOME", None, None)))
+    expenses_amount.configure(text= "Expenses: " + str(be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_ID_number,"EXPENSE", None, None)))
     transaction_form.collect_category_per_user(user_ID_number)
     transaction_table.collect_all_transactions_per_user(user_ID_number, flr_date_from, flr_date_to)
     chart.income_vrs_expenses(overview_fr.top_right_side_fr, user_ID_number)
@@ -52,8 +52,8 @@ def expenses_refresh ():
     if user_ID_number == 0:
         return
 
-    income_amount.configure(text= "Income: " + str(be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_ID_number,"INCOME")) )
-    expenses_amount.configure(text= "Expenses: " + str(be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_ID_number,"EXPENSE")))
+    income_amount.configure(text= "Income: " + str(be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_ID_number,"INCOME", None, None)))
+    expenses_amount.configure(text= "Expenses: " + str(be.Transaction.getAllAmountByMemberIdFilterByTransactionType(user_ID_number,"EXPENSE", None, None)))
     transaction_form.collect_category_per_user(user_ID_number)
     #transaction_table.collect_type_transaction_per_user(user_ID_number , choose_type= "EXPENSE")
     chart.expenses_pie_chart(expenses_fr.top_right_side_fr, user_ID_number)
@@ -230,7 +230,7 @@ class Show_transactions (tk.Frame):
         self.transactions_data.clear()
         #iso_date_from = datetime.datetime.strptime(date_from, "%d-%m-%Y").strftime("%Y-%m-%d")     will be added later
         #iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")         will be added later
-        self.transactions_data.extend(be.Transaction.getAllTransactionsByMemberIdFilterByType(user_id, choose_type))
+        self.transactions_data.extend(be.Transaction.getAllTransactionsByMemberIdFilterByType(user_id, choose_type, None, None))
         self.transactions_data = [(t[0], t[1], t[2], datetime.datetime.strptime(t[3], "%Y-%m-%d").strftime("%d-%m-%Y"), t[4]) for t in self.transactions_data]
         self.load_data()
 
