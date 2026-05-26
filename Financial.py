@@ -306,20 +306,22 @@ class Transaction:
             return Transaction(row[1], row[2], row[3], row[4], row[6], row[5], row[0])
             #return row
         
-    
-    def setDate(fromDate):
+    def setDate(fromDate):                                                          #if the from date doesnt exist it will set it exactly one month before the current date 
         if fromDate == None:
-            strDate = str(currentDate)                                             #convert transaction date to string
+            strDate = str(currentDate)                                             #convert current date to string
             year = int(strDate[0:4])
             month = int(strDate[5:7]) - 1
-            day = int(strDate[8:10])                                                    
+            day = int(strDate[8:10])
+            if month == 0:
+                month = 12
+                year = year - 1                                      
             tempDate = datetime.date(year, month, day) 
             return tempDate
         else:
             return fromDate
 
     def getAllTransactionsByMemberId(memberId, fromDate=None, tillDate=None):
-        Transaction.setDate(fromDate)
+        fromDate = Transaction.setDate(fromDate)
         if tillDate == None:
             tillDate = currentDate
         tempMember = Member.getMemberByMemberId(memberId)
@@ -344,7 +346,7 @@ class Transaction:
                 # return False
 
     def getAllAmountByMemberIdFilterByTransactionType(memberId,transactionType, fromDate=None, tillDate=None):                    #method to get the total amount of income or expenses of a user 
-        Transaction.setDate(fromDate)
+        fromDate = Transaction.setDate(fromDate)
         if tillDate == None:
             tillDate = currentDate
         tempMember = Member.getMemberByMemberId(memberId)
@@ -375,7 +377,7 @@ class Transaction:
                 # return False
         
     def getAllTransactionsByMemberIdFilterDate(memberId,fromDate, tillDate): #deprecated use -> getAllTransactionsByMemberId()
-        Transaction.setDate(fromDate)
+        fromDate = Transaction.setDate(fromDate)
         if tillDate == None:
             tillDate = currentDate
         tempMember = Member.getMemberByMemberId(memberId)
@@ -397,7 +399,7 @@ class Transaction:
                 # return False
 
     def getAllTransactionsByCategoryId(categoryId, fromDate=None, tillDate=None):                 # method to get all transactions of a member from the db
-        Transaction.setDate(fromDate)
+        fromDate = Transaction.setDate(fromDate)
         if tillDate == None:
             tillDate = currentDate
         tempCategory = Category.getCategoryByCategoryId(categoryId)
@@ -451,7 +453,7 @@ class Transaction:
                 return False
     
     def getAllTransactionsByMemberIdFilterByType(memberId,transactionType, fromDate=None, tillDate=None):     #This method can be used to get all the expenses or income of a user
-        Transaction.setDate(fromDate)
+        fromDate = Transaction.setDate(fromDate)
         if tillDate == None:
             tillDate = currentDate
         tempMember = Member.getMemberByMemberId(memberId)
@@ -478,7 +480,7 @@ class Transaction:
                 return False
 
     def getAllTransactionsByMemberIdGroupedByCategory(memberId, transactionType, fromDate=None, tillDate=None):
-        Transaction.setDate(fromDate)
+        fromDate = Transaction.setDate(fromDate)
         if tillDate == None:
             tillDate = currentDate
         tempMember = Member.getMemberByMemberId(memberId)
@@ -596,10 +598,10 @@ def menu():
                     transactionType = "EXPENSE"
                 Transaction.getAllTransactionsByMemberIdFilterByType(id,transactionType)
             elif choice == '17':
-                id = int(input("Select member id:"))
+                id = int(input("Select category id:"))
                 Transaction.getAllTransactionsByMemberIdGroupedByCategory(id)
             elif choice == '20':
-                id = int(input("Select member id:"))
+                id = int(input("Select transaction id:"))
                 Transaction.addRecurringTransaction(Transaction.getTransactionByTransactionId(id))
             elif choice == '0':
                 print("Bye!")
