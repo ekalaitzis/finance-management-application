@@ -477,7 +477,30 @@ class Transaction:
             except sqlite3.IntegrityError:
                 print("This action is restricted, check if all the fields are valid and try again.")
                 return []
-                
+
+    def getAllTransactionsByMemberIdGroupedByDay(memberId, transactionType, fromDate=None, tillDate=None):
+        fromDate = Transaction.setDate(fromDate)
+        if tillDate == None:
+            tillDate = currentDate
+        tempMember = Member.getMemberByMemberId(memberId)
+        if tempMember == None:
+            return []
+        else:
+            user = tempMember.username
+            try:
+                with conn:
+                    cursor.execute('''SELECT SUM("transaction".amount), "transaction".transaction_date 
+                        FROM "transaction" JOIN category ON "transaction".category_id = category.category_id
+                        WHERE category.member_id=1
+                        AND "transaction".transaction_type ="EXPENSE"
+                        GROUP BY "transaction".transaction_date''', {'member_id': memberId, 'fromDate':fromDate, 'tillDate': tillDate})
+                transactions = cursor.fetchall()
+                print(f"Here are the daily transactions of the {user}. \n {transactions}")
+                return transactions
+            except sqlite3.IntegrityError:
+                print("This action is restricted, check if all the fields are valid and try again.")
+                return []
+
     def getTotalByMemberId(memberId):
         income = Transaction.getAllAmountByMemberIdFilterByTransactionType(memberId, "INCOME")
         expense = Transaction.getAllAmountByMemberIdFilterByTransactionType(memberId, "EXPENSE")
