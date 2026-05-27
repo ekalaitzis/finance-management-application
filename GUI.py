@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 
+import export_excel
+import export_excel as exp
 
 from tkcalendar import DateEntry
 import Financial as be
@@ -15,10 +17,11 @@ category_map_id_name = {}
 category_list = []
 transaction_type_list = ["INCOME","EXPENSE"]
 overview_transactions_list = []
-flr_date_to= datetime.datetime.today().date()
-flr_date_from= flr_date_to.replace(day=1)
-flr_date_to = flr_date_to.strftime("%d-%m-%Y")
-flr_date_from = flr_date_from.strftime("%d-%m-%Y")
+flr_date_to_date= datetime.datetime.today().date()
+flr_date_from_date= flr_date_to_date.replace(day=1)
+flr_date_to = flr_date_to_date.strftime("%d-%m-%Y")
+flr_date_from = flr_date_from_date.strftime("%d-%m-%Y")
+
 # =========================
 # functions
 # =========================
@@ -42,7 +45,7 @@ def get_total_amount (userid, type_of_tr,date_from, date_to):
 
 def overview_refresh ():
     global user_ID_number, flr_date_from, flr_date_to
-
+    print(f"user_id: {user_ID_number}, from: {flr_date_from}, to: {flr_date_to}")  # ← add this
     if user_ID_number == 0:
         return
 
@@ -80,8 +83,6 @@ def show_dashboard():
         name_lbl.configure(text="Name: "+ user_information[1] + " " + user_information[2])
         username_lbl.configure(text= "Username: " + user_information[3] )
         show_overview()
-
-
 
     else:
         messagebox.showerror("Login Error", "Username or password is wrong.\nPlease try again.")
@@ -156,8 +157,20 @@ def filter_button_refresh ():
     elif showing_frame == "expenses":
         expenses_refresh()
 
+def export_data (user_id,date_from, date_to ):
+    filter_button_refresh()
+    iso_date_from = datetime.datetime.strptime(date_from, "%d-%m-%Y").strftime("%Y-%m-%d")
+    iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")
+    exp.export_to_excel(user_id,iso_date_from,iso_date_to)
 
 
+def new_transaction_window ():# transaction pop up window
+    global user_ID_number
+    pop_up = tk.Toplevel(main)
+    pop_up.geometry("350x300")
+    form_widget = Transaction_form(pop_up, on_submit=add_transaction, user_id=user_ID_number,on_close=pop_up.destroy)
+    form_widget.grid(row=0, column=0, sticky="nsew")
+    form_widget.collect_category_per_user(user_ID_number)
 # =========================
 #Classes
 # =========================
@@ -182,9 +195,18 @@ class Basic_navigation_frm(tk.Frame):
 
         self.left_side_fr = tk.Frame(self.overview_fr)
         self.left_side_fr.grid(row=0, rowspan=2, column=0, sticky="nsew")
-        self.left_side_fr.grid_rowconfigure(0, weight=5)
+        self.left_side_fr.grid_rowconfigure(0, weight=15)
         self.left_side_fr.grid_rowconfigure(1, weight=1)
         self.left_side_fr.grid_columnconfigure(0, weight=1)
+        self.left_side_fr.grid_columnconfigure(1, weight=1)
+        self.left_side_fr.grid_columnconfigure(2, weight=1)
+        self.left_side_fr.grid_columnconfigure(3, weight=10)
+        self.delete_button = tk.Button (self.left_side_fr,text= "DELETE",width= 25, anchor= "w")
+        self.edit_button = tk.Button(self.left_side_fr,text="EDIT",width= 25, anchor= "w")
+        self.ad_category_button = tk.Button(self.left_side_fr,text="Add New Category",width= 25, anchor= "w")
+        self.delete_button.grid (row=1, column=2, padx=2, pady=2)
+        self.edit_button.grid (row=1, column=1, padx=2, pady=2)
+        self.ad_category_button.grid (row=1, column=0, padx=2, pady=2)
 
         #upper right frame
 
@@ -200,6 +222,7 @@ class Basic_navigation_frm(tk.Frame):
         self.btm_right_side_fr.grid(row=1, column=1, sticky="nsew", padx=2, pady=2)
         self.btm_right_side_fr.grid_columnconfigure(0, weight=1)
         self.btm_right_side_fr.grid_columnconfigure(1, weight=1)
+
 
 class Show_transactions (tk.Frame):
     def __init__(self, parent):
@@ -277,9 +300,10 @@ class Show_transactions (tk.Frame):
         pass
 
 class Transaction_form (tk.Frame):
-    def __init__(self, parent,on_submit,user_id):
+    def __init__(self, parent,on_submit,user_id,on_close=None):
         super().__init__(parent)
 
+        self.on_close = on_close
         self.user_id = user_id
         self.on_submit = on_submit
         self.transaction_name_vr = tk.StringVar()
@@ -362,6 +386,9 @@ class Transaction_form (tk.Frame):
             self.transaction_category_vr.set("")
             self.transaction_type_vr.set("")
             self.transaction_date_entry.set_date(datetime.date.today())
+            if self.on_close:
+                self.on_close()
+
 
     def number_validation(self, value):  # use to check the number is positive float
         try:
@@ -478,13 +505,12 @@ header_fr.pack (side= "top", fill= "both")
 # header widgets
 name_lbl = tk.Label(header_fr, text= "Name: Will retrieve auto", width= 30, anchor= "w", relief="groove")
 username_lbl = tk.Label(header_fr, text= "Username: Will retrieve auto", width= 30, anchor= "w", relief="groove")
-
 income_amount = tk.Label(header_fr, text= "Income:" , width= 30, anchor= "w", relief="groove")
 expenses_amount = tk.Label(header_fr, text= "Expenses:" , width= 30, anchor= "w", relief="groove")
 overview_button = tk.Button (header_fr, text= "Overview",width= 30, anchor= "w", command= show_overview )
 expenses_button = tk.Button (header_fr, text= "Expenses",width= 30, anchor= "w", command=show_expenses)
 income_button = tk.Button (header_fr, text= "Income",width= 30, anchor= "w" , command= show_income)
-
+new_transaction_button = tk.Button (header_fr, text= "Add Transaction",width= 30, anchor= "w", command= new_transaction_window)
 
 # header position
 name_lbl.grid (row= 0 , column= 0 , padx=5 , pady= 5, sticky="w")
@@ -494,7 +520,7 @@ expenses_amount.grid (row= 0 , column= 3 , padx=5 , pady= 5, sticky="w")
 overview_button.grid (row= 1 , column= 0 , padx=5 , pady= 5, sticky="w")
 expenses_button.grid (row= 1 , column= 1 , padx=5 , pady= 5, sticky="w")
 income_button.grid (row= 1 , column= 2 , padx=5 , pady= 5, sticky="w")
-
+new_transaction_button.grid (row= 1 , column= 3 , padx=5 , pady= 5, sticky="w")
 # filter frame
 
 filter_fr = tk.Frame(dashboard_fr, width=1400 , height=50)
@@ -507,9 +533,10 @@ date_from_ENTRY = DateEntry ( filter_fr , width= 25 , date_pattern = "dd-mm-yyyy
 date_to_lbl= tk.Label (filter_fr,text="Date to:")
 date_to_ENTRY = DateEntry ( filter_fr , width= 25 , date_pattern = "dd-mm-yyyy")
 flt_button_apply = tk.Button (filter_fr , width= 25, text= "Apply Filters" , command= filter_button_refresh)
+export_button = tk.Button (filter_fr, text= "Export", width= 25, command=lambda:export_data(user_ID_number,flr_date_from,flr_date_to))
 
-date_from_ENTRY.set_date(flr_date_from)
-date_to_ENTRY.set_date(flr_date_to)
+date_to_ENTRY.set_date(flr_date_to_date)
+date_from_ENTRY.set_date(flr_date_from_date)
 
 # filter position
 date_from_lbl.grid(row=0 , column=0 , padx= 2, pady = 5)
@@ -517,7 +544,7 @@ date_from_ENTRY.grid(row=0 , column=1 , padx= 2, pady = 5)
 date_to_lbl.grid(row=0 , column=2 , padx= 2, pady = 5)
 date_to_ENTRY.grid(row=0 , column=3 , padx= 2, pady = 5)
 flt_button_apply.grid (row=0 , column=4 , padx= 2, pady = 5)
-
+export_button.grid (row= 0 , column= 5 , padx=2 , pady= 5)
 
 
 # =========================
@@ -541,7 +568,7 @@ overview_fr.grid(row=0, column=0, sticky="nsew")
 
 
 transaction_table = Show_transactions(overview_fr.left_side_fr)
-transaction_table.grid(row= 0 , column= 0 , sticky= "nsew")
+transaction_table.grid(row= 0 , column= 0 , columnspan= 4, sticky= "nsew")
 
 transaction_form = Transaction_form (overview_fr.btm_right_side_fr,on_submit=add_transaction ,user_id=user_ID_number)
 transaction_form.grid(row= 0 , column= 0 , sticky= "nsew")
@@ -557,7 +584,7 @@ expenses_fr.grid(row=0, column=0, sticky="nsew")
 
 
 expenses_table = Show_transactions(expenses_fr.left_side_fr)
-expenses_table.grid(row= 0 , column= 0 , sticky= "nsew")
+expenses_table.grid(row= 0 , column= 0 ,columnspan= 4, sticky= "nsew")
 
 
 # =========================
