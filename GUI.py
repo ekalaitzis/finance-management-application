@@ -62,10 +62,24 @@ def expenses_refresh ():
     income_amount.configure(text= "Income: " + str(get_total_amount(user_ID_number,transaction_type_list[0], flr_date_from, flr_date_to)))
     expenses_amount.configure(text= "Expenses: " + str(get_total_amount(user_ID_number,transaction_type_list[1], flr_date_from, flr_date_to)))
     transaction_form.collect_category_per_user(user_ID_number)
-    chart.expenses_pie_chart(expenses_fr.top_right_side_fr, user_ID_number, flr_date_from, flr_date_to)
+    chart.expenses_pie_chart(expenses_fr.top_right_side_fr, user_ID_number, flr_date_from, flr_date_to, "EXPENSE")
     transaction_form.user_id = user_ID_number
     chart.daily_spend(expenses_fr.btm_right_side_fr)
     expenses_table.collect_type_transaction_per_user(user_ID_number,transaction_type_list[1], flr_date_from, flr_date_to) # to be removed
+
+def income_refresh ():
+    global user_ID_number, flr_date_from, flr_date_to
+
+    if user_ID_number == 0:
+        return
+
+    income_amount.configure(text= "Income: " + str(get_total_amount(user_ID_number,transaction_type_list[0], flr_date_from, flr_date_to)))
+    expenses_amount.configure(text= "Expenses: " + str(get_total_amount(user_ID_number,transaction_type_list[1], flr_date_from, flr_date_to)))
+    transaction_form.collect_category_per_user(user_ID_number)
+    chart.expenses_pie_chart(income_fr.top_right_side_fr, user_ID_number,flr_date_from, flr_date_to, "INCOME")
+    transaction_form.user_id = user_ID_number
+    #chart.daily_spend(expenses_fr.btm_right_side_fr)
+    income_table.collect_type_transaction_per_user(user_ID_number,transaction_type_list[0], flr_date_from, flr_date_to) # to be removed
 
 def show_dashboard():
 
@@ -94,7 +108,10 @@ def show_overview():
     showing_frame = "overview"
 
 def show_income():
+    global showing_frame
     income_fr.tkraise()
+    income_refresh()
+    showing_frame = "income"
 
 def show_expenses():
     global showing_frame
@@ -153,6 +170,8 @@ def filter_button_refresh ():
         overview_refresh()
     elif showing_frame == "expenses":
         expenses_refresh()
+    elif showing_frame == "income":
+        income_refresh()
 
 def export_data (user_id,date_from, date_to ):
     filter_button_refresh()
@@ -633,6 +652,7 @@ income_fr= Basic_navigation_frm (basic_fr)
 income_fr.grid_propagate(False)
 income_fr.grid(row=0, column=0, sticky="nsew")
 
-
+income_table = Show_transactions(income_fr.left_side_fr)
+income_table.grid(row= 0 , column= 0 ,columnspan= 4, sticky= "nsew")
 
 main.mainloop()
