@@ -1,5 +1,5 @@
 import sqlite3
-import datetime
+from datetime import datetime, timedelta
 
 currentDate = datetime.date.today()
 
@@ -304,7 +304,6 @@ class Transaction:
             return None
         else:
             return Transaction(row[1], row[2], row[3], row[4], row[6], row[5], row[0])
-            #return row
         
     def setDate(fromDate):                                                          #if the from date doesnt exist it will set it exactly one month before the current date 
         if fromDate == None:
@@ -491,9 +490,9 @@ class Transaction:
                 with conn:
                     cursor.execute('''SELECT SUM("transaction".amount), "transaction".transaction_date 
                         FROM "transaction" JOIN category ON "transaction".category_id = category.category_id
-                        WHERE category.member_id=1
-                        AND "transaction".transaction_type ="EXPENSE"
-                        GROUP BY "transaction".transaction_date''', {'member_id': memberId, 'fromDate':fromDate, 'tillDate': tillDate})
+                        WHERE category.member_id=:member_id
+                        AND "transaction".transaction_type =:transaction_type
+                        GROUP BY "transaction".transaction_date''', {'member_id': memberId,'transaction_type': transactionType, 'fromDate':fromDate, 'tillDate': tillDate})
                 transactions = cursor.fetchall()
                 print(f"Here are the daily transactions of the {user}. \n {transactions}")
                 return transactions
@@ -505,7 +504,54 @@ class Transaction:
         income = Transaction.getAllAmountByMemberIdFilterByTransactionType(memberId, "INCOME")
         expense = Transaction.getAllAmountByMemberIdFilterByTransactionType(memberId, "EXPENSE")
         return income - expense
+
+    def getAllTransctionsByMemberIdFilterRecurring(memberId, fromDate=None, tillDate=None):
+        fromDate = Transaction.setDate(fromDate)
+        if tillDate == None:
+            tillDate = currentDate
+        tempMember = Member.getMemberByMemberId(memberId)
+        if tempMember == None:
+            return []
+        else:
+            user = tempMember.username
+            try:
+                with conn:
+                    cursor.execute('''SELECT "transaction".transaction_id, "transaction".transaction_name, "transaction".transaction_type, "transaction".amount, "transaction".transaction_date,"transaction".is_recurring, category.category_id, category.category_name, category.member_id
+                        FROM "transaction"
+                        JOIN category
+                        ON "transaction".category_id = category.category_id
+                        WHERE category.member_id=:member_id AND "transaction".is_recurring = "YES" AND "transaction".transaction_date BETWEEN :fromDate AND :tillDate''', {'member_id': memberId, 'fromDate':fromDate, 'tillDate': tillDate})
+                transactions = cursor.fetchall()
+                print(f"Here are the transactions of the {user}. \n {transactions}")
+                return transactions
+            except sqlite3.IntegrityError:
+                print("This action is restricted, check if all the fields are valid and try again.")
+                return []
     
+    def getNextRecurringDateByTransactionId(transactionId):                     
+        tempTransaction = Transaction.getTransactionByTransactionId(transactionId)
+        if tempTransaction[6] == "Yes":
+            strDate = str(tempTransaction[4])                                             
+            month = int(strDate[5:7])
+            day = int(strDate[8:10])
+            tempDate = datetime.date(year, month, day)
+            while tempDate <= currentDate:
+                month += 1                                                              
+                if month == 13:
+                    month = 1
+                    year += 1
+                if month == 2 and day > 28:                                            
+                    tempDay = 28
+                    tempDate = datetime.date(year, month, tempDay)
+                elif (day == 31) and (month == 4 or month == 6 or month == 9 or month == 11):      
+                    tempDay = 30
+                    tempDate = datetime.date(year, month, tempDay)
+                else:                                                                   
+                    tempDate = datetime.date(year, month, day)                                     
+            return tempDate
+        else:
+            return None
+            
 def menu():
         while True:
             print("\n=== Διαχείριση Φοιτητών ===")
