@@ -213,7 +213,7 @@ class Category:
                     c1 = Category("General", tempCategory.memberId)                                             #create a category object with category name "General"
                     Category.createCategoryByMemberId(c1, tempCategory.memberId)                                #add the object to the db, now there is a "General" category
                 for tr in tempTransactions:                                                                     #loop though all saved transactions
-                    t1 = Transaction(tr[1], tr[2], tr[3], tr[4], generalCategoryId)                             #create a transaction object each iteration from the saved transactions
+                    t1 = Transaction(tr[1], tr[2], tr[3], tr[4], generalCategoryId, tr[6])                      #create a transaction object each iteration from the saved transactions                    
                     Transaction.createTransactionByCategoryId(t1,generalCategoryId)                             #add the instance of each transaction to the db
                 print(f"Category: {tempCategory.categoryName} deleted.")
                 return True
@@ -368,35 +368,11 @@ class Transaction:
                     return 0
                 else:
                     return total 
-                # return True
             except sqlite3.IntegrityError:
                 print("This action is restricted, check if all the fields are valid and try again.")
                 return 0
-                # return False
-        
-    def getAllTransactionsByMemberIdFilterDate(memberId,fromDate, tillDate): #deprecated use -> getAllTransactionsByMemberId()
-        fromDate = Transaction.setDate(fromDate)
-        if tillDate == None:
-            tillDate = currentDate
-        tempMember = Member.getMemberByMemberId(memberId)
-        if tempMember == None:
-            return None
-        else:
-            user = tempMember.username
-            try:
-                with conn:
-                    cursor.execute('SELECT "transaction".transaction_name, "transaction".transaction_type, "transaction".amount, "transaction".transaction_date, category.category_name FROM "transaction" JOIN category ON "transaction".category_id = category.category_id WHERE category.member_id=:member_id AND "transaction".transaction_date BETWEEN :fromDate AND :tillDate',
-                                    {'member_id': memberId, 'fromDate':fromDate, 'tillDate': tillDate})
-                transactions = cursor.fetchall()
-                print(f"Here are the transactions of the {user}. \n {transactions}")
-                return transactions
-                # return True
-            except sqlite3.IntegrityError:
-                print("This action is restricted, check if all the fields are valid and try again.")
-                return []
-                # return False
 
-    def getAllTransactionsByCategoryId(categoryId, fromDate=None, tillDate=None):                 # method to get all transactions of a member from the db
+    def getAllTransactionsByCategoryId(categoryId, fromDate=None, tillDate=None):#not currently in use                 # method to get all transactions of a member from the db
         fromDate = Transaction.setDate(fromDate)
         if tillDate == None:
             tillDate = currentDate
@@ -461,7 +437,7 @@ class Transaction:
             user = tempMember.username
             try:
                 with conn:
-                    cursor.execute('''SELECT "transaction".transaction_name, "transaction".amount, "transaction".transaction_date, category.category_name 
+                    cursor.execute('''SELECT "transaction".transaction_id, "transaction".transaction_name, "transaction".transaction_type, "transaction".amount, "transaction".transaction_date, "transaction".is_recurring, category.category_id, category.category_name, category.member_id 
                                    FROM "transaction" JOIN category ON "transaction".category_id = category.category_id 
                                    WHERE category.member_id=:member_id 
                                    AND "transaction".transaction_type =:transaction_type
