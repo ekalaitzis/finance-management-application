@@ -12,9 +12,6 @@ import datetime
 
 showing_frame= None
 user_ID_number=0
-category_map_name_id = {}
-category_map_id_name = {}
-category_list = []
 transaction_type_list = ["INCOME","EXPENSE"]
 overview_transactions_list = []
 flr_date_to_date= datetime.datetime.today().date()
@@ -168,9 +165,48 @@ def new_transaction_window ():# transaction pop up window
     global user_ID_number
     pop_up = tk.Toplevel(main)
     pop_up.geometry("350x300")
+    pop_up.title ("Add transaction")
     form_widget = Transaction_form(pop_up, on_submit=add_transaction, user_id=user_ID_number,on_close=pop_up.destroy)
     form_widget.grid(row=0, column=0, sticky="nsew")
     form_widget.collect_category_per_user(user_ID_number)
+
+def add_new_category (category_name):
+    global user_ID_number
+    new_name = category_name
+    new_category=be.Category(new_name,user_ID_number)
+    new_category.createCategoryByMemberId(user_ID_number)
+    filter_button_refresh()
+
+def delete_validation (name_var):
+    if name_var not in transaction_form.category_list:
+        messagebox.showerror("Error", "Please select a category.")
+    else:
+        be.Category.deleteCategoryByCategoryId(transaction_form.category_map_name_id[name_var])
+        filter_button_refresh()
+
+
+def delete_category ():
+    global user_ID_number
+    pop_up_category = tk.Toplevel (main)
+    pop_up_category.geometry("350x70")
+    pop_up_category.title("Delete Category")
+    filter_button_refresh()
+    name_var = tk.StringVar()
+    tk.Label(pop_up_category, text="Category:", width=15).grid(row=0, column=0, padx=5, pady=5)
+    ttk.Combobox(pop_up_category, textvariable=name_var, width=25, values=transaction_form.category_list).grid(row=0, column=1, padx=5,pady=5)
+    tk.Button(pop_up_category, text="Submit",command=lambda: [delete_validation(name_var.get()), pop_up_category.destroy()]).grid(row=1, column=1,pady=5)
+
+
+def new_category_window():
+    pop_up_category = tk.Toplevel (main)
+    pop_up_category.geometry("250x70")
+    pop_up_category.title("New Category")
+    name_var = tk.StringVar()
+
+    tk.Label(pop_up_category, text="Category Name:").grid(row=0, column=0, padx=5, pady=5)
+    tk.Entry(pop_up_category, textvariable=name_var).grid(row=0, column=1, padx=5, pady=5)
+    tk.Button(pop_up_category, text="Submit", command=lambda: [add_new_category(name_var.get()),pop_up_category.destroy()]).grid(row=1, column=1, pady=5)
+
 # =========================
 #Classes
 # =========================
@@ -200,13 +236,16 @@ class Basic_navigation_frm(tk.Frame):
         self.left_side_fr.grid_columnconfigure(0, weight=1)
         self.left_side_fr.grid_columnconfigure(1, weight=1)
         self.left_side_fr.grid_columnconfigure(2, weight=1)
-        self.left_side_fr.grid_columnconfigure(3, weight=10)
+        self.left_side_fr.grid_columnconfigure(3, weight=1)
+        self.left_side_fr.grid_columnconfigure(4, weight=10)
         self.delete_button = tk.Button (self.left_side_fr,text= "DELETE",width= 25, anchor= "w")
         self.edit_button = tk.Button(self.left_side_fr,text="EDIT",width= 25, anchor= "w")
-        self.ad_category_button = tk.Button(self.left_side_fr,text="Add New Category",width= 25, anchor= "w")
-        self.delete_button.grid (row=1, column=2, padx=2, pady=2)
-        self.edit_button.grid (row=1, column=1, padx=2, pady=2)
+        self.ad_category_button = tk.Button(self.left_side_fr,text="Add New Category",width= 25, anchor= "w", command= new_category_window)
+        self.delete_category_button = tk.Button(self.left_side_fr, text="Delete Category", width=25, anchor="w",command=delete_category)
+        self.delete_button.grid (row=1, column=3, padx=2, pady=2)
+        self.edit_button.grid (row=1, column=2, padx=2, pady=2)
         self.ad_category_button.grid (row=1, column=0, padx=2, pady=2)
+        self.delete_category_button.grid (row=1, column=1, padx=2, pady=2)
 
         #upper right frame
 
