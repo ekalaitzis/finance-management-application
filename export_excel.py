@@ -5,13 +5,14 @@ from Financial import Transaction
 # Export συναλλαγών σε excel
 
 def export_to_excel(member_id, from_date=None, to_date=None,
-                    filename="oikonomika_stoixeia.xlsx"):
+                    filename=None):
+    if filename is None:
+        filename = "oikonomika_stoixeia.xlsx"
 
     transactions = Transaction.getAllTransactionsByMemberId(
         member_id,
         from_date,
-        to_date
-    )
+to_date)
 
     workbook = xlsxwriter.Workbook(filename)
 
