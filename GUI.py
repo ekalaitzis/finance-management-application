@@ -38,19 +38,22 @@ def get_total_amount (userid, type_of_tr,date_from, date_to):
     total_amount=be.Transaction.getAllAmountByMemberIdFilterByTransactionType(userid, type_of_tr, iso_date_from, iso_date_to)
     return total_amount
 
-
 def overview_refresh ():
     global user_ID_number, flr_date_from, flr_date_to
     print(f"user_id: {user_ID_number}, from: {flr_date_from}, to: {flr_date_to}")  # ← add this
     if user_ID_number == 0:
         return
 
-    income_amount.configure(text= "Income: " + str(get_total_amount(user_ID_number,transaction_type_list[0], flr_date_from, flr_date_to)))
-    expenses_amount.configure(text= "Expenses: " + str(get_total_amount(user_ID_number,transaction_type_list[1], flr_date_from, flr_date_to)))
+    income_amount.configure(text= f"Income: {get_total_amount(user_ID_number,transaction_type_list[0], flr_date_from, flr_date_to):.2f}")
+    expenses_amount.configure(text= f"Expenses: {get_total_amount(user_ID_number,transaction_type_list[1], flr_date_from, flr_date_to):.2f}")
+    available_assets.configure(text= f"Available Assets : {be.Transaction.getTotalByMemberId(user_ID_number):.2f}")
     transaction_form.collect_category_per_user(user_ID_number)
     transaction_table.collect_all_transactions_per_user(user_ID_number, flr_date_from, flr_date_to)
     chart.income_vrs_expenses(overview_fr.top_right_side_fr, user_ID_number,flr_date_from, flr_date_to)
     transaction_form.user_id = user_ID_number
+    overview_button.configure(state="disabled")
+    expenses_button.configure(state="normal")
+    income_button.configure(state="normal")
 
 def expenses_refresh ():
     global user_ID_number, flr_date_from, flr_date_to
@@ -58,13 +61,17 @@ def expenses_refresh ():
     if user_ID_number == 0:
         return
 
-    income_amount.configure(text= "Income: " + str(get_total_amount(user_ID_number,transaction_type_list[0], flr_date_from, flr_date_to)))
-    expenses_amount.configure(text= "Expenses: " + str(get_total_amount(user_ID_number,transaction_type_list[1], flr_date_from, flr_date_to)))
+    income_amount.configure(text= f"Income: {get_total_amount(user_ID_number,transaction_type_list[0], flr_date_from, flr_date_to):.2f}")
+    expenses_amount.configure(text= f"Expenses: {get_total_amount(user_ID_number,transaction_type_list[1], flr_date_from, flr_date_to):.2f}")
+    available_assets.configure(text= f"Available Assets : {be.Transaction.getTotalByMemberId(user_ID_number):.2f}")
     transaction_form.collect_category_per_user(user_ID_number)
     chart.expenses_pie_chart(expenses_fr.top_right_side_fr, user_ID_number, flr_date_from, flr_date_to, "EXPENSE")
     transaction_form.user_id = user_ID_number
     chart.daily_spend(expenses_fr.btm_right_side_fr,user_ID_number, flr_date_from, flr_date_to)
-    expenses_table.collect_type_transaction_per_user(user_ID_number,transaction_type_list[1], flr_date_from, flr_date_to) # to be removed
+    expenses_table.collect_type_transaction_per_user(user_ID_number,transaction_type_list[1], flr_date_from, flr_date_to)
+    overview_button.configure(state="normal")
+    expenses_button.configure(state="disabled")
+    income_button.configure(state="normal")
 
 def income_refresh ():
     global user_ID_number, flr_date_from, flr_date_to
@@ -72,13 +79,17 @@ def income_refresh ():
     if user_ID_number == 0:
         return
 
-    income_amount.configure(text= "Income: " + str(get_total_amount(user_ID_number,transaction_type_list[0], flr_date_from, flr_date_to)))
-    expenses_amount.configure(text= "Expenses: " + str(get_total_amount(user_ID_number,transaction_type_list[1], flr_date_from, flr_date_to)))
+    income_amount.configure(text= f"Income: {get_total_amount(user_ID_number,transaction_type_list[0], flr_date_from, flr_date_to):.2f}")
+    expenses_amount.configure(text= f"Expenses: {get_total_amount(user_ID_number,transaction_type_list[1], flr_date_from, flr_date_to):.2f}")
+    available_assets.configure(text= f"Available Assets : {be.Transaction.getTotalByMemberId(user_ID_number):.2f}")
     transaction_form.collect_category_per_user(user_ID_number)
     chart.expenses_pie_chart(income_fr.top_right_side_fr, user_ID_number,flr_date_from, flr_date_to, "INCOME")
     transaction_form.user_id = user_ID_number
     #chart.daily_spend(expenses_fr.btm_right_side_fr)
-    income_table.collect_type_transaction_per_user(user_ID_number,transaction_type_list[0], flr_date_from, flr_date_to) # to be removed
+    income_table.collect_type_transaction_per_user(user_ID_number,transaction_type_list[0], flr_date_from, flr_date_to)
+    overview_button.configure(state="normal")
+    expenses_button.configure(state="normal")
+    income_button.configure(state="disabled")
 
 def show_dashboard():
 
@@ -99,7 +110,6 @@ def show_dashboard():
         username_label.configure(fg="red")
         password_label.configure(fg="red")
 
-
 def show_overview():
     global showing_frame
     overview_fr.tkraise()
@@ -117,7 +127,6 @@ def show_expenses():
     expenses_fr.tkraise()
     expenses_refresh()
     showing_frame = "expenses"
-
 
 def new_registration():
     new_username_label.configure(fg="black")
@@ -152,14 +161,11 @@ def new_registration():
             new_password_label.configure(fg= "red")
             new_password2_label.configure(fg="red")
 
-
 def add_transaction(data):
 
         new_transaction=be.Transaction(data["name"],data["type"],data["amount"], data["date"],data["category_id"] ,data ["recurring"])
         new_transaction.createTransactionByCategoryId(data["category_id"])
         overview_refresh()
-
-
 
 def filter_button_refresh ():
     global flr_date_from , flr_date_to ,user_ID_number,showing_frame
@@ -177,7 +183,6 @@ def export_data (user_id,date_from, date_to ):
     iso_date_from = datetime.datetime.strptime(date_from, "%d-%m-%Y").strftime("%Y-%m-%d")
     iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")
     exp.export_to_excel(user_id,iso_date_from,iso_date_to)
-
 
 def new_transaction_window ():# transaction pop up window
     global user_ID_number
@@ -202,7 +207,6 @@ def delete_validation (name_var):
         be.Category.deleteCategoryByCategoryId(transaction_form.category_map_name_id[name_var])
         filter_button_refresh()
 
-
 def delete_category ():
     global user_ID_number
     pop_up_category = tk.Toplevel (main)
@@ -213,7 +217,6 @@ def delete_category ():
     tk.Label(pop_up_category, text="Category:", width=15).grid(row=0, column=0, padx=5, pady=5)
     ttk.Combobox(pop_up_category, textvariable=name_var, width=25, values=transaction_form.category_list).grid(row=0, column=1, padx=5,pady=5)
     tk.Button(pop_up_category, text="Submit",command=lambda: [delete_validation(name_var.get()), pop_up_category.destroy()]).grid(row=1, column=1,pady=5)
-
 
 def new_category_window():
     pop_up_category = tk.Toplevel (main)
@@ -293,16 +296,15 @@ class Basic_navigation_frm(tk.Frame):
         self.btm_right_side_fr.grid_columnconfigure(0, weight=1)
         self.btm_right_side_fr.grid_columnconfigure(1, weight=1)
 
-
 class Show_transactions (tk.Frame):
     def __init__(self, parent, on_select=None):
         super().__init__(parent)
         self.on_select = on_select
-        self.left_table = ttk.Treeview(self, columns=("ID","Transaction", "Type", "Amount", "Date", "Category"), show="headings")
+        self.left_table = ttk.Treeview(self, columns=("ID","Transaction", "Type", "Amount", "Date", "Category","Recutting"), show="headings")
         for  column in self.left_table["columns"]:
             self.left_table.heading(column, text = column)
             self.left_table.column(column,stretch=True)
-        self.left_table.column("ID", width=0, stretch=False)  # ← hide it
+        self.left_table.column("ID", width=0, stretch=False)
         self.left_table.heading("ID", text="")
 
         self.scrollbar_y = ttk.Scrollbar(self, orient="vertical", command=self.left_table.yview)
@@ -334,7 +336,7 @@ class Show_transactions (tk.Frame):
         iso_date_from = datetime.datetime.strptime(date_from, "%d-%m-%Y").strftime("%Y-%m-%d")
         iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")
         self.transactions_data.extend(be.Transaction.getAllTransactionsByMemberId(user_id, iso_date_from, iso_date_to))
-        self.transactions_data = [ (t[0], t[1], t[2], t[3], datetime.datetime.strptime(t[4], "%Y-%m-%d").strftime("%d-%m-%Y"), t[7])for t in sorted(self.transactions_data,key=lambda x: x[4],reverse=True)]
+        self.transactions_data = [ (t[0], t[1], t[2], t[3], datetime.datetime.strptime(t[4], "%Y-%m-%d").strftime("%d-%m-%Y"), t[7],t[5])for t in sorted(self.transactions_data,key=lambda x: x[4],reverse=True)]
         self.load_data()
 
     def collect_type_transaction_per_user (self, user_id, choose_type,date_from, date_to): # need to add the dates once the function is ready
@@ -342,7 +344,8 @@ class Show_transactions (tk.Frame):
         iso_date_from = datetime.datetime.strptime(date_from, "%d-%m-%Y").strftime("%Y-%m-%d")
         iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")
         self.transactions_data.extend(be.Transaction.getAllTransactionsByMemberIdFilterByType(user_id, choose_type, iso_date_from, iso_date_to))
-        self.transactions_data = [(t[0],t[1], t[2], t[3], datetime.datetime.strptime(t[4], "%Y-%m-%d").strftime("%d-%m-%Y"), t[7]) for t in sorted(self.transactions_data, key=lambda x: x[4], reverse=True)]
+        self.transactions_data = [(t[0],t[1], t[2], t[3], datetime.datetime.strptime(t[4], "%Y-%m-%d").strftime("%d-%m-%Y"), t[7],t[5]) for t in sorted(self.transactions_data, key=lambda x: x[4], reverse=True)]
+        print("this is your data " , self.transactions_data)
         self.load_data()
 
 
@@ -373,22 +376,29 @@ class Show_transactions (tk.Frame):
             self.on_select()
 
     def delete_item(self):
-        pop_up = tk.Toplevel (self,)
+        pop_up = tk.Toplevel (self)
         pop_up.geometry("250x100")
-        pop_up.title("DELETE ITEM")
+        pop_up.title("DELETE TRANSACTION")
 
         tk.Label(pop_up, text="Are you sure you want to delete transaction:\n" + self.selected_values_from_table[1]).grid(row=0, column=0,columnspan=2, padx=5, pady=5)
         tk.Button(pop_up, text="Submit",command=lambda: [be.Transaction.deleteTransactionByTransactionId(self.selected_values_from_table[0]), pop_up.destroy(),filter_button_refresh()]).grid(row=1, column=0, pady=5)
         tk.Button(pop_up, text="Cancel",command=lambda: pop_up.destroy()).grid(row=1, column=1, pady=5)
 
     def edit_item(self):
-        pass
+        pop_up = tk.Toplevel(self )
+        pop_up.geometry("400x300")
+        pop_up.title("UPDATE TRANSACTION")
+        form=Transaction_form (pop_up, on_submit=add_transaction,user_id=user_ID_number,on_close=pop_up.destroy,transaction_id=self.selected_values_from_table[0])
+        form.grid(row=0, column=0, sticky="nsew")
+        form.collect_category_per_user(user_ID_number)
+        form.autopopulate_form(self.selected_values_from_table)
 
 class Transaction_form (tk.Frame):
-    def __init__(self, parent,on_submit,user_id,on_close=None):
+    def __init__(self, parent,on_submit,user_id,on_close=None, transaction_id=None):
         super().__init__(parent)
 
         self.on_close = on_close
+        self.transaction_id = transaction_id
         self.user_id = user_id
         self.on_submit = on_submit
         self.transaction_name_vr = tk.StringVar()
@@ -465,12 +475,17 @@ class Transaction_form (tk.Frame):
             selected_category_id = self.category_map_name_id[self.transaction_category_vr.get()]
             iso_date = datetime.datetime.strptime(self.transaction_date_entry.get(), "%d-%m-%Y").date().isoformat()
             data = {"name": self.transaction_name_vr.get(), "type": self.transaction_type_vr.get() , "amount": self.transaction_amount_vr.get() , "date": iso_date, "category_id": selected_category_id, "recurring": self.is_recurring.get()}
-            self.on_submit(data)
-            self.transaction_amount_vr.set("")
-            self.transaction_name_vr.set("")
-            self.transaction_category_vr.set("")
-            self.transaction_type_vr.set("")
-            self.transaction_date_entry.set_date(datetime.date.today())
+            if self.transaction_id:
+                data_list = be.Transaction( data["name"],data["type"],data["amount"],data["date"], data["category_id"],data["recurring"])
+                be.Transaction.UpdateTransactionByTransactionId(self.transaction_id, data_list)
+                filter_button_refresh()
+            else:
+                self.on_submit(data)
+                self.transaction_amount_vr.set("")
+                self.transaction_name_vr.set("")
+                self.transaction_category_vr.set("")
+                self.transaction_type_vr.set("")
+                self.transaction_date_entry.set_date(datetime.date.today())
             if self.on_close:
                 self.on_close()
 
@@ -487,7 +502,13 @@ class Transaction_form (tk.Frame):
         except ValueError:
             return False
 
-
+    def autopopulate_form (self,transaction_data):
+        self.transaction_name_vr.set(transaction_data[1])
+        self.transaction_type_vr.set(transaction_data [2])
+        self.transaction_amount_vr.set(transaction_data [3])
+        self.transaction_category_vr.set(transaction_data [5])
+        self.transaction_date_entry.set_date(datetime.datetime.strptime(transaction_data[4],"%d-%m-%Y").date())
+        self.is_recurring.set(transaction_data[6])
 
 # =========================
 # Main Window
@@ -496,7 +517,6 @@ class Transaction_form (tk.Frame):
 main= tk.Tk()
 main.title("family finance manager")
 main.geometry ("400x200")
-
 
 # =========================
 # Login frame
@@ -522,6 +542,7 @@ login_button = tk.Button (login_fr, text= "log in", padx=5, pady=5, command = sh
 register_button = tk.Button (login_fr, text= "register", command = show_register , padx=5, pady=5)
 
 # grid
+
 login_title_label.grid (row=0 , columnspan=4 )
 username_label.grid(row = 1, column = 1)
 username_entry.grid (row=1, column=2,columnspan=2)
@@ -529,7 +550,6 @@ password_label.grid(row=2,column=1)
 password_entry.grid (row=2, column=2,columnspan=2)
 login_button.grid (row= 4, column= 2)
 register_button.grid (row= 4,column=3)
-
 
 # =========================
 # Register frame
@@ -586,6 +606,11 @@ dashboard_fr = tk.Frame(main)
 header_fr = tk.Frame (dashboard_fr, height=50 , width=1400)
 header_fr.pack_propagate(False)
 header_fr.pack (side= "top", fill= "both")
+header_fr.columnconfigure (0 , weight=1)
+header_fr.columnconfigure (1 , weight=1)
+header_fr.columnconfigure (2 , weight=1)
+header_fr.columnconfigure (3 , weight=1)
+header_fr.columnconfigure (4 , weight=2)
 
 # header widgets
 name_lbl = tk.Label(header_fr, text= "Name: Will retrieve auto", width= 30, anchor= "w", relief="groove")
@@ -596,6 +621,7 @@ overview_button = tk.Button (header_fr, text= "Overview",width= 30, anchor= "w",
 expenses_button = tk.Button (header_fr, text= "Expenses",width= 30, anchor= "w", command=show_expenses)
 income_button = tk.Button (header_fr, text= "Income",width= 30, anchor= "w" , command= show_income)
 new_transaction_button = tk.Button (header_fr, text= "Add Transaction",width= 30, anchor= "w", command= new_transaction_window)
+available_assets= tk.Label(header_fr , text= "Available Assets :" + str(be.Transaction.getTotalByMemberId(user_ID_number)),relief="ridge", bd=5,width= 30 )
 
 # header position
 name_lbl.grid (row= 0 , column= 0 , padx=5 , pady= 5, sticky="w")
@@ -606,6 +632,7 @@ overview_button.grid (row= 1 , column= 0 , padx=5 , pady= 5, sticky="w")
 expenses_button.grid (row= 1 , column= 1 , padx=5 , pady= 5, sticky="w")
 income_button.grid (row= 1 , column= 2 , padx=5 , pady= 5, sticky="w")
 new_transaction_button.grid (row= 1 , column= 3 , padx=5 , pady= 5, sticky="w")
+available_assets.grid (row= 0 , column= 4 ,rowspan=2, padx=5 , pady= 5, sticky="w")
 # filter frame
 
 filter_fr = tk.Frame(dashboard_fr, width=1400 , height=50)
