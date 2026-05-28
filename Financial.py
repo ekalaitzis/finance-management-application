@@ -1,5 +1,5 @@
 import sqlite3
-from datetime import datetime, timedelta
+import datetime
 
 currentDate = datetime.date.today()
 
@@ -492,7 +492,9 @@ class Transaction:
                         FROM "transaction" JOIN category ON "transaction".category_id = category.category_id
                         WHERE category.member_id=:member_id
                         AND "transaction".transaction_type =:transaction_type
-                        GROUP BY "transaction".transaction_date''', {'member_id': memberId,'transaction_type': transactionType, 'fromDate':fromDate, 'tillDate': tillDate})
+                        AND "transaction".transaction_date BETWEEN :fromDate AND :tillDate
+                        GROUP BY "transaction".transaction_date
+                        ORDER BY "transaction".transaction_date ''', {'member_id': memberId,'transaction_type': transactionType, 'fromDate':fromDate, 'tillDate': tillDate})
                 transactions = cursor.fetchall()
                 print(f"Here are the daily transactions of the {user}. \n {transactions}")
                 return transactions
