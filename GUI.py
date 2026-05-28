@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 
-import export_excel
 import export_excel as exp
 
 from tkcalendar import DateEntry
@@ -64,7 +63,7 @@ def expenses_refresh ():
     transaction_form.collect_category_per_user(user_ID_number)
     chart.expenses_pie_chart(expenses_fr.top_right_side_fr, user_ID_number, flr_date_from, flr_date_to, "EXPENSE")
     transaction_form.user_id = user_ID_number
-    chart.daily_spend(expenses_fr.btm_right_side_fr)
+    chart.daily_spend(expenses_fr.btm_right_side_fr,user_ID_number, flr_date_from, flr_date_to)
     expenses_table.collect_type_transaction_per_user(user_ID_number,transaction_type_list[1], flr_date_from, flr_date_to) # to be removed
 
 def income_refresh ():
@@ -318,8 +317,8 @@ class Show_transactions (tk.Frame):
         self.transactions_data.clear()
         iso_date_from = datetime.datetime.strptime(date_from, "%d-%m-%Y").strftime("%Y-%m-%d")
         iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")
-        self.transactions_data.extend(be.Transaction.getAllTransactionsByMemberIdFilterDate(user_id, iso_date_from, iso_date_to))
-        self.transactions_data = [ ( t[0], t[1], t[2], datetime.datetime.strptime(t[3], "%Y-%m-%d").strftime("%d-%m-%Y"), t[4])for t in sorted(self.transactions_data,key=lambda x: x[3],reverse=True)]
+        self.transactions_data.extend(be.Transaction.getAllTransactionsByMemberId(user_id, iso_date_from, iso_date_to))
+        self.transactions_data = [ ( t[1], t[2], t[3], datetime.datetime.strptime(t[4], "%Y-%m-%d").strftime("%d-%m-%Y"), t[6])for t in sorted(self.transactions_data,key=lambda x: x[3],reverse=True)]
         self.load_data()
 
     def collect_type_transaction_per_user (self, user_id, choose_type,date_from, date_to): # need to add the dates once the function is ready
