@@ -1,9 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
-
+from tkinter import filedialog
 import export_excel as exp
-
 from tkcalendar import DateEntry
 import Financial as be
 import charts as chart
@@ -40,7 +39,6 @@ def get_total_amount (userid, type_of_tr,date_from, date_to):
 
 def overview_refresh ():
     global user_ID_number, flr_date_from, flr_date_to
-    print(f"user_id: {user_ID_number}, from: {flr_date_from}, to: {flr_date_to}")  # ← add this
     if user_ID_number == 0:
         return
 
@@ -64,9 +62,7 @@ def expenses_refresh ():
     income_amount.configure(text= f"Income: {get_total_amount(user_ID_number,transaction_type_list[0], flr_date_from, flr_date_to):.2f}")
     expenses_amount.configure(text= f"Expenses: {get_total_amount(user_ID_number,transaction_type_list[1], flr_date_from, flr_date_to):.2f}")
     available_assets.configure(text= f"Available Assets : {be.Transaction.getTotalByMemberId(user_ID_number):.2f}")
-    transaction_form.collect_category_per_user(user_ID_number)
     chart.expenses_pie_chart(expenses_fr.top_right_side_fr, user_ID_number, flr_date_from, flr_date_to, "EXPENSE")
-    transaction_form.user_id = user_ID_number
     chart.daily_spend(expenses_fr.btm_right_side_fr,user_ID_number, flr_date_from, flr_date_to)
     expenses_table.collect_type_transaction_per_user(user_ID_number,transaction_type_list[1], flr_date_from, flr_date_to)
     overview_button.configure(state="normal")
@@ -82,11 +78,9 @@ def income_refresh ():
     income_amount.configure(text= f"Income: {get_total_amount(user_ID_number,transaction_type_list[0], flr_date_from, flr_date_to):.2f}")
     expenses_amount.configure(text= f"Expenses: {get_total_amount(user_ID_number,transaction_type_list[1], flr_date_from, flr_date_to):.2f}")
     available_assets.configure(text= f"Available Assets : {be.Transaction.getTotalByMemberId(user_ID_number):.2f}")
-    transaction_form.collect_category_per_user(user_ID_number)
     chart.expenses_pie_chart(income_fr.top_right_side_fr, user_ID_number,flr_date_from, flr_date_to, "INCOME")
-    transaction_form.user_id = user_ID_number
-    #chart.daily_spend(expenses_fr.btm_right_side_fr)
     income_table.collect_type_transaction_per_user(user_ID_number,transaction_type_list[0], flr_date_from, flr_date_to)
+    recurring_transactions.collect_recurring_data(user_ID_number, flr_date_from, flr_date_to)
     overview_button.configure(state="normal")
     expenses_button.configure(state="normal")
     income_button.configure(state="disabled")
@@ -182,7 +176,10 @@ def export_data (user_id,date_from, date_to ):
     filter_button_refresh()
     iso_date_from = datetime.datetime.strptime(date_from, "%d-%m-%Y").strftime("%Y-%m-%d")
     iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")
-    exp.export_to_excel(user_id,iso_date_from,iso_date_to)
+    saved_file_path =filedialog.asksaveasfilename( defaultextension=".xlsx",filetypes=[("Excel files", "*.xlsx")],title="Save Export As",initialfile=f"export_{date_from}_to_{date_to}.xlsx" )
+
+    exp.export_to_excel(user_id,iso_date_from,iso_date_to, filename=saved_file_path)
+    messagebox.showinfo("Export", "File saved successfully!")
 
 def new_transaction_window ():# transaction pop up window
     global user_ID_number
@@ -272,8 +269,8 @@ class Basic_navigation_frm(tk.Frame):
         self.left_side_fr.grid_columnconfigure(2, weight=1)
         self.left_side_fr.grid_columnconfigure(3, weight=1)
         self.left_side_fr.grid_columnconfigure(4, weight=10)
-        self.delete_button = tk.Button (self.left_side_fr,text= "DELETE",width= 25, anchor= "w",command=lambda: self.table.delete_item() if self.table else None,state="disabled")
-        self.edit_button = tk.Button(self.left_side_fr,text="EDIT",width= 25, anchor= "w", command=lambda: self.table.edit_item() if self.table else None, state="disabled")
+        self.delete_button = tk.Button (self.left_side_fr,text= "Delete Transaction",width= 25, anchor= "w",command=lambda: self.table.delete_item() if self.table else None,state="disabled")
+        self.edit_button = tk.Button(self.left_side_fr,text="Edit Transaction",width= 25, anchor= "w", command=lambda: self.table.edit_item() if self.table else None, state="disabled")
         self.ad_category_button = tk.Button(self.left_side_fr,text="Add New Category",width= 25, anchor= "w", command= new_category_window)
         self.delete_category_button = tk.Button(self.left_side_fr, text="Delete Category", width=25, anchor="w",command=delete_category)
         self.delete_button.grid (row=1, column=3, padx=2, pady=2)
@@ -300,7 +297,7 @@ class Show_transactions (tk.Frame):
     def __init__(self, parent, on_select=None):
         super().__init__(parent)
         self.on_select = on_select
-        self.left_table = ttk.Treeview(self, columns=("ID","Transaction", "Type", "Amount", "Date", "Category","Recutting"), show="headings")
+        self.left_table = ttk.Treeview(self, columns=("ID","Transaction", "Type", "Amount", "Date", "Category","Recurring"), show="headings")
         for  column in self.left_table["columns"]:
             self.left_table.heading(column, text = column)
             self.left_table.column(column,stretch=True)
@@ -345,7 +342,6 @@ class Show_transactions (tk.Frame):
         iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")
         self.transactions_data.extend(be.Transaction.getAllTransactionsByMemberIdFilterByType(user_id, choose_type, iso_date_from, iso_date_to))
         self.transactions_data = [(t[0],t[1], t[2], t[3], datetime.datetime.strptime(t[4], "%Y-%m-%d").strftime("%d-%m-%Y"), t[7],t[5]) for t in sorted(self.transactions_data, key=lambda x: x[4], reverse=True)]
-        print("this is your data " , self.transactions_data)
         self.load_data()
 
 
@@ -510,6 +506,36 @@ class Transaction_form (tk.Frame):
         self.transaction_date_entry.set_date(datetime.datetime.strptime(transaction_data[4],"%d-%m-%Y").date())
         self.is_recurring.set(transaction_data[6])
 
+class Recurring_transactions (tk.Frame):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.recurring_table = ttk.Treeview(self, columns=("1", "2", "3", "4", "5", "6", "7"), show="headings")
+        for  column in self.recurring_table["columns"]:
+            self.recurring_table.heading(column, text = column)
+            self.recurring_table.column(column, stretch=True)
+
+
+        self.scrollbar_y = ttk.Scrollbar(self, orient="vertical", command=self.recurring_table.yview)
+        self.recurring_table.configure(yscrollcommand=self.scrollbar_y.set)
+        self.scrollbar_x = ttk.Scrollbar(self, orient="horizontal", command=self.recurring_table.xview)
+        self.recurring_table.configure(xscrollcommand=self.scrollbar_x.set)
+
+        self.recurring_table.grid(row=0, column=0, sticky="nsew")
+        self.scrollbar_y.grid(row=0, column=1, sticky="ns")
+        self.scrollbar_x.grid(row=1, column=0, sticky="ew" , pady= 2)
+
+        self.recurring_data = []
+
+    def collect_recurring_data(self,user_id, date_from, date_to):
+        self.recurring_data.clear()
+        iso_date_from = datetime.datetime.strptime(date_from, "%d-%m-%Y").strftime("%Y-%m-%d")
+        iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")
+        self.recurring_data.extend(be.Transaction.getAllTransctionsByMemberIdFilterRecurring(user_id, iso_date_from, iso_date_to))
+        for item in self.recurring_table.get_children():
+            self.recurring_table.delete(item)
+        for single_row in self.recurring_data:
+            self.recurring_table.insert("", "end", values=single_row)
+
 # =========================
 # Main Window
 # =========================
@@ -621,7 +647,7 @@ overview_button = tk.Button (header_fr, text= "Overview",width= 30, anchor= "w",
 expenses_button = tk.Button (header_fr, text= "Expenses",width= 30, anchor= "w", command=show_expenses)
 income_button = tk.Button (header_fr, text= "Income",width= 30, anchor= "w" , command= show_income)
 new_transaction_button = tk.Button (header_fr, text= "Add Transaction",width= 30, anchor= "w", command= new_transaction_window)
-available_assets= tk.Label(header_fr , text= "Available Assets :" + str(be.Transaction.getTotalByMemberId(user_ID_number)),relief="ridge", bd=5,width= 30 )
+available_assets= tk.Label(header_fr , text= "Available Assets :" + str(be.Transaction.getTotalByMemberId(user_ID_number)),font=("arial", 16),relief="ridge", bd=5,width= 30 )
 
 # header position
 name_lbl.grid (row= 0 , column= 0 , padx=5 , pady= 5, sticky="w")
@@ -644,8 +670,8 @@ date_from_lbl= tk.Label (filter_fr,text="Date from:")
 date_from_ENTRY = DateEntry ( filter_fr , width= 25 , date_pattern = "dd-mm-yyyy")
 date_to_lbl= tk.Label (filter_fr,text="Date to:")
 date_to_ENTRY = DateEntry ( filter_fr , width= 25 , date_pattern = "dd-mm-yyyy")
-flt_button_apply = tk.Button (filter_fr , width= 25, text= "Apply Filters" , command= filter_button_refresh)
-export_button = tk.Button (filter_fr, text= "Export", width= 25, command=lambda:export_data(user_ID_number,flr_date_from,flr_date_to))
+flt_button_apply = tk.Button (filter_fr , width= 30, text= "Apply Filters" , command= filter_button_refresh)
+export_button = tk.Button (filter_fr, text= "Export", width= 30, command=lambda:export_data(user_ID_number,flr_date_from,flr_date_to))
 
 date_to_ENTRY.set_date(flr_date_to_date)
 date_from_ENTRY.set_date(flr_date_from_date)
@@ -655,8 +681,8 @@ date_from_lbl.grid(row=0 , column=0 , padx= 2, pady = 5)
 date_from_ENTRY.grid(row=0 , column=1 , padx= 2, pady = 5)
 date_to_lbl.grid(row=0 , column=2 , padx= 2, pady = 5)
 date_to_ENTRY.grid(row=0 , column=3 , padx= 2, pady = 5)
-flt_button_apply.grid (row=0 , column=4 , padx= 2, pady = 5)
-export_button.grid (row= 0 , column= 5 , padx=2 , pady= 5)
+flt_button_apply.grid (row=0 , column=4 , padx=5, pady = 5)
+export_button.grid (row= 0 , column= 5 , padx=5 , pady = 5)
 
 
 # =========================
@@ -708,5 +734,7 @@ income_table = Show_transactions(income_fr.left_side_fr,on_select=on_income_sele
 income_table.grid(row= 0 , column= 0 ,columnspan= 4, sticky= "nsew")
 income_fr.table = income_table
 
+recurring_transactions = Recurring_transactions(income_fr.btm_right_side_fr)
+recurring_transactions.grid(row= 0 , column= 0 , sticky= "nsew")
 
 main.mainloop()
