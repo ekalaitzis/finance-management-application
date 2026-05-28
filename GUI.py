@@ -225,13 +225,26 @@ def new_category_window():
     tk.Entry(pop_up_category, textvariable=name_var).grid(row=0, column=1, padx=5, pady=5)
     tk.Button(pop_up_category, text="Submit", command=lambda: [add_new_category(name_var.get()),pop_up_category.destroy()]).grid(row=1, column=1, pady=5)
 
+def on_income_select():
+    income_fr.delete_button.configure(state="normal")
+    income_fr.edit_button.configure(state="normal")
+
+def on_overview_select():
+    overview_fr.delete_button.configure(state="normal")
+    overview_fr.edit_button.configure(state="normal")
+
+def on_expenses_select():
+    expenses_fr.delete_button.configure(state="normal")
+    expenses_fr.edit_button.configure(state="normal")
+
 # =========================
 #Classes
 # =========================
 
 class Basic_navigation_frm(tk.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent,table=None):
         super().__init__(parent)
+        self.table = table
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
         # basic frame of screen
@@ -256,8 +269,8 @@ class Basic_navigation_frm(tk.Frame):
         self.left_side_fr.grid_columnconfigure(2, weight=1)
         self.left_side_fr.grid_columnconfigure(3, weight=1)
         self.left_side_fr.grid_columnconfigure(4, weight=10)
-        self.delete_button = tk.Button (self.left_side_fr,text= "DELETE",width= 25, anchor= "w")
-        self.edit_button = tk.Button(self.left_side_fr,text="EDIT",width= 25, anchor= "w")
+        self.delete_button = tk.Button (self.left_side_fr,text= "DELETE",width= 25, anchor= "w",command=lambda: self.table.delete_item() if self.table else None,state="disabled")
+        self.edit_button = tk.Button(self.left_side_fr,text="EDIT",width= 25, anchor= "w", command=lambda: self.table.edit_item() if self.table else None, state="disabled")
         self.ad_category_button = tk.Button(self.left_side_fr,text="Add New Category",width= 25, anchor= "w", command= new_category_window)
         self.delete_category_button = tk.Button(self.left_side_fr, text="Delete Category", width=25, anchor="w",command=delete_category)
         self.delete_button.grid (row=1, column=3, padx=2, pady=2)
@@ -282,12 +295,15 @@ class Basic_navigation_frm(tk.Frame):
 
 
 class Show_transactions (tk.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent, on_select=None):
         super().__init__(parent)
-        self.left_table = ttk.Treeview(self, columns=("Transaction", "Type", "Amount", "Date", "Category"), show="headings")
+        self.on_select = on_select
+        self.left_table = ttk.Treeview(self, columns=("ID","Transaction", "Type", "Amount", "Date", "Category"), show="headings")
         for  column in self.left_table["columns"]:
             self.left_table.heading(column, text = column)
             self.left_table.column(column,stretch=True)
+        self.left_table.column("ID", width=0, stretch=False)  # ← hide it
+        self.left_table.heading("ID", text="")
 
         self.scrollbar_y = ttk.Scrollbar(self, orient="vertical", command=self.left_table.yview)
         self.left_table.configure(yscrollcommand=self.scrollbar_y.set)
@@ -318,7 +334,7 @@ class Show_transactions (tk.Frame):
         iso_date_from = datetime.datetime.strptime(date_from, "%d-%m-%Y").strftime("%Y-%m-%d")
         iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")
         self.transactions_data.extend(be.Transaction.getAllTransactionsByMemberId(user_id, iso_date_from, iso_date_to))
-        self.transactions_data = [ ( t[1], t[2], t[3], datetime.datetime.strptime(t[4], "%Y-%m-%d").strftime("%d-%m-%Y"), t[6])for t in sorted(self.transactions_data,key=lambda x: x[3],reverse=True)]
+        self.transactions_data = [ (t[0], t[1], t[2], t[3], datetime.datetime.strptime(t[4], "%Y-%m-%d").strftime("%d-%m-%Y"), t[7])for t in sorted(self.transactions_data,key=lambda x: x[4],reverse=True)]
         self.load_data()
 
     def collect_type_transaction_per_user (self, user_id, choose_type,date_from, date_to): # need to add the dates once the function is ready
@@ -326,7 +342,7 @@ class Show_transactions (tk.Frame):
         iso_date_from = datetime.datetime.strptime(date_from, "%d-%m-%Y").strftime("%Y-%m-%d")
         iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")
         self.transactions_data.extend(be.Transaction.getAllTransactionsByMemberIdFilterByType(user_id, choose_type, iso_date_from, iso_date_to))
-        #self.transactions_data = [(t[0], t[1], t[2], t[3]) for t in self.transactions_data] # needs updates
+        self.transactions_data = [(t[0],t[1], t[2], t[3], datetime.datetime.strptime(t[4], "%Y-%m-%d").strftime("%d-%m-%Y"), t[7]) for t in sorted(self.transactions_data, key=lambda x: x[4], reverse=True)]
         self.load_data()
 
 
@@ -340,6 +356,10 @@ class Show_transactions (tk.Frame):
         item = self.left_table.identify_row(event.y)
         if item:
             self.left_table.selection_set(item)
+            self.selected_item_from_table = item
+            self.selected_values_from_table = self.left_table.item(item, "values")
+            if self.on_select:
+                self.on_select()
 
     def right_click(self,event):
         self.selected_item_from_table = self.left_table.identify_row(event.y)
@@ -349,9 +369,17 @@ class Show_transactions (tk.Frame):
         self.left_table.selection_set(self.selected_item_from_table)
         self.selected_values_from_table = self.left_table.item(self.selected_item_from_table, "values")
         self.right_click_menu.post(event.x_root, event.y_root)
+        if self.on_select:
+            self.on_select()
 
     def delete_item(self):
-        print(self.selected_values_from_table)
+        pop_up = tk.Toplevel (self,)
+        pop_up.geometry("250x100")
+        pop_up.title("DELETE ITEM")
+
+        tk.Label(pop_up, text="Are you sure you want to delete transaction:\n" + self.selected_values_from_table[1]).grid(row=0, column=0,columnspan=2, padx=5, pady=5)
+        tk.Button(pop_up, text="Submit",command=lambda: [be.Transaction.deleteTransactionByTransactionId(self.selected_values_from_table[0]), pop_up.destroy(),filter_button_refresh()]).grid(row=1, column=0, pady=5)
+        tk.Button(pop_up, text="Cancel",command=lambda: pop_up.destroy()).grid(row=1, column=1, pady=5)
 
     def edit_item(self):
         pass
@@ -622,11 +650,9 @@ overview_fr= Basic_navigation_frm (basic_fr)
 overview_fr.grid_propagate(False)
 overview_fr.grid(row=0, column=0, sticky="nsew")
 
-
-
-transaction_table = Show_transactions(overview_fr.left_side_fr)
+transaction_table = Show_transactions(overview_fr.left_side_fr,on_select=on_overview_select)
 transaction_table.grid(row= 0 , column= 0 , columnspan= 4, sticky= "nsew")
-
+overview_fr.table = transaction_table
 transaction_form = Transaction_form (overview_fr.btm_right_side_fr,on_submit=add_transaction ,user_id=user_ID_number)
 transaction_form.grid(row= 0 , column= 0 , sticky= "nsew")
 
@@ -640,9 +666,9 @@ expenses_fr.grid_propagate(False)
 expenses_fr.grid(row=0, column=0, sticky="nsew")
 
 
-expenses_table = Show_transactions(expenses_fr.left_side_fr)
+expenses_table = Show_transactions(expenses_fr.left_side_fr,on_select=on_expenses_select)
 expenses_table.grid(row= 0 , column= 0 ,columnspan= 4, sticky= "nsew")
-
+expenses_fr.table = expenses_table
 
 # =========================
 # income Frame
@@ -651,7 +677,9 @@ income_fr= Basic_navigation_frm (basic_fr)
 income_fr.grid_propagate(False)
 income_fr.grid(row=0, column=0, sticky="nsew")
 
-income_table = Show_transactions(income_fr.left_side_fr)
+income_table = Show_transactions(income_fr.left_side_fr,on_select=on_income_select)
 income_table.grid(row= 0 , column= 0 ,columnspan= 4, sticky= "nsew")
+income_fr.table = income_table
+
 
 main.mainloop()
