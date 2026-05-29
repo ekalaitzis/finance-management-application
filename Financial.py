@@ -404,7 +404,7 @@ class Transaction:
                     {'transaction_name':updatedTransaction.transactionName, 'transaction_type':updatedTransaction.transactionType,  'amount':updatedTransaction.amount, 'transaction_date':updatedTransaction.date, 'category_id':updatedTransaction.categoryId, 'transactionId':transactionId})
                 print(f"Updated transaction name to:{tempTransaction.transactionName}.")
                 transaction = cursor.fetchone
-                if updatedTransaction.isRecurring:
+                if updatedTransaction.isRecurring == "YES":
                         Transaction.addRecurringTransaction(updatedTransaction)
                 return transaction              
             except sqlite3.IntegrityError:
@@ -450,7 +450,6 @@ class Transaction:
             except sqlite3.IntegrityError:
                 print("This action is restricted, check if all the fields are valid and try again.")
                 return []
-                return False
 
     def getAllTransactionsByMemberIdGroupedByCategory(memberId, transactionType, fromDate=None, tillDate=None):
         fromDate = Transaction.setDate(fromDate)
@@ -619,7 +618,7 @@ def menu():
                     transactionType = "EXPENSE"
                 amount = int(input("Amount of transaction? "))
                 catId = input("Category id of the transaction? ")
-                rec = input("Transaction recurring? 1 for yes, 0 for no.")
+                rec = int(input("Transaction recurring? 1 for yes, 0 for no."))
                 if rec == 1:
                     recurring = "YES"
                 else:
