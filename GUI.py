@@ -37,14 +37,18 @@ def get_total_amount (userid, type_of_tr,date_from, date_to):
     total_amount=be.Transaction.getAllAmountByMemberIdFilterByTransactionType(userid, type_of_tr, iso_date_from, iso_date_to)
     return total_amount
 
+def header_refresh ():
+    global user_ID_number, flr_date_from, flr_date_to
+    income_amount.configure(text= f"Income: {get_total_amount(user_ID_number,transaction_type_list[0], flr_date_from, flr_date_to):.2f}")
+    expenses_amount.configure(text= f"Expenses: {get_total_amount(user_ID_number,transaction_type_list[1], flr_date_from, flr_date_to):.2f}")
+    available_assets.configure(text= f"Available Assets : {be.Transaction.getTotalByMemberId(user_ID_number):.2f}")
+
 def overview_refresh ():
     global user_ID_number, flr_date_from, flr_date_to
     if user_ID_number == 0:
         return
 
-    income_amount.configure(text= f"Income: {get_total_amount(user_ID_number,transaction_type_list[0], flr_date_from, flr_date_to):.2f}")
-    expenses_amount.configure(text= f"Expenses: {get_total_amount(user_ID_number,transaction_type_list[1], flr_date_from, flr_date_to):.2f}")
-    available_assets.configure(text= f"Available Assets : {be.Transaction.getTotalByMemberId(user_ID_number):.2f}")
+    header_refresh()
     transaction_form.collect_category_per_user(user_ID_number)
     transaction_table.collect_all_transactions_per_user(user_ID_number, flr_date_from, flr_date_to)
     chart.income_vrs_expenses(overview_fr.top_right_side_fr, user_ID_number,flr_date_from, flr_date_to)
@@ -59,9 +63,7 @@ def expenses_refresh ():
     if user_ID_number == 0:
         return
 
-    income_amount.configure(text= f"Income: {get_total_amount(user_ID_number,transaction_type_list[0], flr_date_from, flr_date_to):.2f}")
-    expenses_amount.configure(text= f"Expenses: {get_total_amount(user_ID_number,transaction_type_list[1], flr_date_from, flr_date_to):.2f}")
-    available_assets.configure(text= f"Available Assets : {be.Transaction.getTotalByMemberId(user_ID_number):.2f}")
+    header_refresh()
     chart.expenses_pie_chart(expenses_fr.top_right_side_fr, user_ID_number, flr_date_from, flr_date_to, "EXPENSE")
     chart.daily_spend(expenses_fr.btm_right_side_fr,user_ID_number, flr_date_from, flr_date_to)
     expenses_table.collect_type_transaction_per_user(user_ID_number,transaction_type_list[1], flr_date_from, flr_date_to)
@@ -75,9 +77,7 @@ def income_refresh ():
     if user_ID_number == 0:
         return
 
-    income_amount.configure(text= f"Income: {get_total_amount(user_ID_number,transaction_type_list[0], flr_date_from, flr_date_to):.2f}")
-    expenses_amount.configure(text= f"Expenses: {get_total_amount(user_ID_number,transaction_type_list[1], flr_date_from, flr_date_to):.2f}")
-    available_assets.configure(text= f"Available Assets : {be.Transaction.getTotalByMemberId(user_ID_number):.2f}")
+    header_refresh()
     chart.expenses_pie_chart(income_fr.top_right_side_fr, user_ID_number,flr_date_from, flr_date_to, "INCOME")
     income_table.collect_type_transaction_per_user(user_ID_number,transaction_type_list[0], flr_date_from, flr_date_to)
     recurring_transactions.collect_recurring_data(user_ID_number, flr_date_from, flr_date_to)
@@ -181,7 +181,7 @@ def export_data (user_id,date_from, date_to ):
     exp.export_to_excel(user_id,iso_date_from,iso_date_to, filename=saved_file_path)
     messagebox.showinfo("Export", "File saved successfully!")
 
-def new_transaction_window ():# transaction pop up window
+def new_transaction_window ():
     global user_ID_number
     pop_up = tk.Toplevel(main)
     pop_up.geometry("350x300")
@@ -336,7 +336,7 @@ class Show_transactions (tk.Frame):
         self.transactions_data = [ (t[0], t[1], t[2], t[3], datetime.datetime.strptime(t[4], "%Y-%m-%d").strftime("%d-%m-%Y"), t[7],t[5])for t in sorted(self.transactions_data,key=lambda x: x[4],reverse=True)]
         self.load_data()
 
-    def collect_type_transaction_per_user (self, user_id, choose_type,date_from, date_to): # need to add the dates once the function is ready
+    def collect_type_transaction_per_user (self, user_id, choose_type,date_from, date_to):
         self.transactions_data.clear()
         iso_date_from = datetime.datetime.strptime(date_from, "%d-%m-%Y").strftime("%Y-%m-%d")
         iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")
@@ -486,7 +486,7 @@ class Transaction_form (tk.Frame):
                 self.on_close()
 
 
-    def number_validation(self, value):  # use to check the number is positive float
+    def number_validation(self, value):
         try:
             amount_valid = float(value)
 
