@@ -212,9 +212,9 @@ class Category:
                 if generalCategoryId == None:                                                                   # "General" doesnt exist as a category
                     c1 = Category("General", tempCategory.memberId)                                             #create a category object with category name "General"
                     Category.createCategoryByMemberId(c1, tempCategory.memberId)                                #add the object to the db, now there is a "General" category
-                    generalCategoryId = Category.getCategoryIdByCategoryName(tempCategory.memberId, "General")    #now set the category id to the new created general category
+                    generalCategoryId = Category.getCategoryIdByCategoryName(tempCategory.memberId, "General")  #now set the category id to the new created general category
                 for tr in tempTransactions:                                                                     #loop though all saved transactions
-                    t1 = Transaction(tr[1], tr[2], tr[3], tr[4],generalCategoryId, tr[5])                      #create a transaction object each iteration from the saved transactions                    
+                    t1 = Transaction(tr[1], tr[2], tr[3], tr[4], generalCategoryId, tr[5])                      #create a transaction object each iteration from the saved transactions                    
                     Transaction.createTransactionByCategoryId(t1,generalCategoryId)                             #add the instance of each transaction to the db
                 print(f"Category: {tempCategory.categoryName} deleted.")
                 return True
@@ -245,13 +245,6 @@ class Transaction:
         if tempCategory == None:
             return False
         else:
-            print(self.transactionName)
-            print(self.transactionType)
-            print(self.amount)
-            print(self.date)
-            print(self.isRecurring)
-            print(self.categoryId)
-            print(self.transactionId)
             try:
                 with conn:
                     cursor.execute('INSERT INTO "transaction" (transaction_name, transaction_type, amount, transaction_date, is_recurring, category_id) VALUES (?, ?, ?, ?, ?, ?)',
@@ -514,7 +507,7 @@ class Transaction:
         expense = Transaction.getAllAmountByMemberIdFilterByTransactionType(memberId, "EXPENSE")
         return income - expense
 
-    def getAllTransctionsByMemberIdFilterRecurring(memberId, fromDate=None, tillDate=None):
+    def getAllTransctionsByMemberIdFilterRecurring(memberId, fromDate=None, tillDate=None):      #use getSubscriptions() to get the same list but with the next date of the subscription
         fromDate = Transaction.setDate(fromDate)
         if tillDate == None:
             tillDate = currentDate
@@ -539,8 +532,8 @@ class Transaction:
     
     def getNextRecurringDateByTransactionId(transactionId):                     
         tempTransaction = Transaction.getTransactionByTransactionId(transactionId)
-        if tempTransaction[6] == "Yes":
-            strDate = str(tempTransaction[4])
+        if tempTransaction.isRecurring == "YES":
+            strDate = str(tempTransaction.date)
             year = int(strDate[0:4])                                          
             month = int(strDate[5:7])
             day = int(strDate[8:10])
@@ -561,7 +554,19 @@ class Transaction:
             return tempDate
         else:
             return None
-            
+    
+    def getSubscriptions(memberId, fromDate=None, tillDate=None):
+        transactions = Transaction.getAllTransctionsByMemberIdFilterRecurring(memberId, fromDate, tillDate)
+        subscriptions = []
+        for tr in transactions:                                                             #loop throught all recurring transactions
+            date = Transaction.getNextRecurringDateByTransactionId(tr[0])                   # find the next recurring date for each one
+            subscriptions.append((tr[0], tr[1], tr[2], tr[3], date, tr[5], tr[6], tr[7], tr[8]))  #change only the date to the next months date
+
+        return subscriptions
+
+
+
+
 def menu():
         while True:
             print("\n=== Διαχείριση Φοιτητών ===")
