@@ -180,8 +180,8 @@ class Category:
             print(Category(row[1], row[2], row[0]))
             return Category(row[1], row[2], row[0])
 
-    def getCategoryIdByCategoryName(memberid,categoryName):
-        allCategories = Category.getAllCategoriesByMemberId(memberid)
+    def getCategoryIdByCategoryName(memberId, categoryName):
+        allCategories = Category.getAllCategoriesByMemberId(memberId)
         for cat in allCategories:
             if cat[1] == categoryName:
                 return cat[0]
@@ -207,18 +207,19 @@ class Category:
             tempTransactions = Transaction.getAllTransactionsByCategoryId(categoryId)                           #save the transactions to move to another category
             with conn:
                 cursor.execute("DELETE FROM category WHERE category_id=:category_id", {'category_id': categoryId})
-            if Category.getCategoryByCategoryId(categoryId) == None:                                            #check if deleted
+            if Category.getCategoryByCategoryId(categoryId) == None:                                            #check if delete was successful
                 generalCategoryId = Category.getCategoryIdByCategoryName(tempCategory.memberId, "General")      #find the id of the "General" category
                 if generalCategoryId == None:                                                                   # "General" doesnt exist as a category
                     c1 = Category("General", tempCategory.memberId)                                             #create a category object with category name "General"
                     Category.createCategoryByMemberId(c1, tempCategory.memberId)                                #add the object to the db, now there is a "General" category
+                    generalCategoryId = Category.getCategoryIdByCategoryName(tempCategory.memberId, "General")  #now set the category id to the new created general category
                 for tr in tempTransactions:                                                                     #loop though all saved transactions
-                    t1 = Transaction(tr[1], tr[2], tr[3], tr[4], generalCategoryId, tr[6])                      #create a transaction object each iteration from the saved transactions                    
+                    t1 = Transaction(tr[1], tr[2], tr[3], tr[4], generalCategoryId, tr[5])                      #create a transaction object each iteration from the saved transactions                    
                     Transaction.createTransactionByCategoryId(t1,generalCategoryId)                             #add the instance of each transaction to the db
                 print(f"Category: {tempCategory.categoryName} deleted.")
                 return True
             else:
-                print("Failed to delete")
+                print(f"Failed to delete {tempCategory.categoryName}")
                 return False
 
 class Transaction:
@@ -250,7 +251,7 @@ class Transaction:
                                    (self.transactionName, self.transactionType ,self.amount ,self.date, self.isRecurring ,categoryId))
                     print(f"Transaction added! \n{self.transactionName} \n{self.transactionType}\n{self.amount}\n{self.date}\nto:\n{tempCategory}")
                     conn.commit()
-                    if self.isRecurring:
+                    if self.isRecurring == "YES":
                         Transaction.addRecurringTransaction(self)
                     return True
             except sqlite3.IntegrityError:
@@ -273,16 +274,16 @@ class Transaction:
             if month == 2 and day > 28:                                            #if the day is 29 or more on february make it 28
                 tempDay = 28
                 tempDate = datetime.date(year, month, tempDay)
-                tempTransaction = Transaction(transaction.transactionName, transaction.transactionType, transaction.amount, str(tempDate), transaction.categoryId, transaction.isRecurring)
+                tempTransaction = Transaction(transaction.transactionName, transaction.transactionType, transaction.amount, str(tempDate), transaction.categoryId, "No")
                 Transaction.checkRecurringTransactions(tempTransaction)             #check if the transaction has been already added to the db, if not add it
             elif (day == 31) and (month == 4 or month == 6 or month == 9 or month == 11):      #if day is 31, make it 30 on these months
                 tempDay = 30
                 tempDate = datetime.date(year, month, tempDay)
-                tempTransaction = Transaction(transaction.transactionName, transaction.transactionType, transaction.amount, str(tempDate), transaction.categoryId, transaction.isRecurring)
+                tempTransaction = Transaction(transaction.transactionName, transaction.transactionType, transaction.amount, str(tempDate), transaction.categoryId, "No")
                 Transaction.checkRecurringTransactions(tempTransaction)
             else:                                                                   #for 31 day months check if the transaction has been already added to the db, if not add it 
                 tempDate = datetime.date(year, month, day)
-                tempTransaction = Transaction(transaction.transactionName, transaction.transactionType, transaction.amount, str(tempDate), transaction.categoryId, transaction.isRecurring)
+                tempTransaction = Transaction(transaction.transactionName, transaction.transactionType, transaction.amount, str(tempDate), transaction.categoryId, "No")
                 Transaction.checkRecurringTransactions(tempTransaction)
 
     def checkRecurringTransactions(transaction):                                    #this method checks if there the recuring transaction has run before, if not add it in the db, otherwise it just skips
@@ -404,7 +405,7 @@ class Transaction:
                     {'transaction_name':updatedTransaction.transactionName, 'transaction_type':updatedTransaction.transactionType,  'amount':updatedTransaction.amount, 'transaction_date':updatedTransaction.date, 'category_id':updatedTransaction.categoryId, 'transactionId':transactionId})
                 print(f"Updated transaction name to:{tempTransaction.transactionName}.")
                 transaction = cursor.fetchone
-                if updatedTransaction.isRecurring:
+                if updatedTransaction.isRecurring == "YES":
                         Transaction.addRecurringTransaction(updatedTransaction)
                 return transaction              
             except sqlite3.IntegrityError:
@@ -450,7 +451,6 @@ class Transaction:
             except sqlite3.IntegrityError:
                 print("This action is restricted, check if all the fields are valid and try again.")
                 return []
-                return False
 
     def getAllTransactionsByMemberIdGroupedByCategory(memberId, transactionType, fromDate=None, tillDate=None):
         fromDate = Transaction.setDate(fromDate)
@@ -507,7 +507,7 @@ class Transaction:
         expense = Transaction.getAllAmountByMemberIdFilterByTransactionType(memberId, "EXPENSE")
         return income - expense
 
-    def getAllTransctionsByMemberIdFilterRecurring(memberId, fromDate=None, tillDate=None):
+    def getAllTransctionsByMemberIdFilterRecurring(memberId, fromDate=None, tillDate=None):      #use getSubscriptions() to get the same list but with the next date of the subscription
         fromDate = Transaction.setDate(fromDate)
         if tillDate == None:
             tillDate = currentDate
@@ -532,8 +532,9 @@ class Transaction:
     
     def getNextRecurringDateByTransactionId(transactionId):                     
         tempTransaction = Transaction.getTransactionByTransactionId(transactionId)
-        if tempTransaction[6] == "Yes":
-            strDate = str(tempTransaction[4])                                             
+        if tempTransaction.isRecurring == "YES":
+            strDate = str(tempTransaction.date)
+            year = int(strDate[0:4])                                          
             month = int(strDate[5:7])
             day = int(strDate[8:10])
             tempDate = datetime.date(year, month, day)
@@ -553,7 +554,19 @@ class Transaction:
             return tempDate
         else:
             return None
-            
+    
+    def getAllSubscriptionsByMemberIdFilterRecurring(memberId, fromDate=None, tillDate=None):
+        transactions = Transaction.getAllTransctionsByMemberIdFilterRecurring(memberId, fromDate, tillDate)
+        subscriptions = []
+        for tr in transactions:                                                             #loop throught all recurring transactions
+            date = Transaction.getNextRecurringDateByTransactionId(tr[0])                   # find the next recurring date for each one
+            subscriptions.append((tr[0], tr[1], tr[2], tr[3], date, tr[5], tr[6], tr[7], tr[8]))  #change only the date to the next months date
+
+        return subscriptions
+
+
+
+
 def menu():
         while True:
             print("\n=== Διαχείριση Φοιτητών ===")
@@ -619,8 +632,13 @@ def menu():
                     transactionType = "EXPENSE"
                 amount = int(input("Amount of transaction? "))
                 catId = input("Category id of the transaction? ")
+                rec = int(input("Transaction recurring? 1 for yes, 0 for no."))
+                if rec == 1:
+                    recurring = "YES"
+                else:
+                    recurring = "NO"
                 
-                t1 = Transaction(name, transactionType, amount, currentDate, catId)
+                t1 = Transaction(name, transactionType, amount, currentDate, catId, recurring)
                 t1.createTransactionByCategoryId(catId)
             elif choice == '12':
                 id = int(input("Select category id:"))
