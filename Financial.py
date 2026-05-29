@@ -555,7 +555,7 @@ class Transaction:
         else:
             return None
     
-    def getSubscriptions(memberId, fromDate=None, tillDate=None):
+    def getAllSubscriptionsByMemberIdFilterRecurring(memberId, fromDate=None, tillDate=None):
         transactions = Transaction.getAllTransctionsByMemberIdFilterRecurring(memberId, fromDate, tillDate)
         subscriptions = []
         for tr in transactions:                                                             #loop throught all recurring transactions
