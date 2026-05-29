@@ -180,8 +180,8 @@ class Category:
             print(Category(row[1], row[2], row[0]))
             return Category(row[1], row[2], row[0])
 
-    def getCategoryIdByCategoryName(memberid,categoryName):
-        allCategories = Category.getAllCategoriesByMemberId(memberid)
+    def getCategoryIdByCategoryName(memberId, categoryName):
+        allCategories = Category.getAllCategoriesByMemberId(memberId)
         for cat in allCategories:
             if cat[1] == categoryName:
                 return cat[0]
@@ -207,18 +207,19 @@ class Category:
             tempTransactions = Transaction.getAllTransactionsByCategoryId(categoryId)                           #save the transactions to move to another category
             with conn:
                 cursor.execute("DELETE FROM category WHERE category_id=:category_id", {'category_id': categoryId})
-            if Category.getCategoryByCategoryId(categoryId) == None:                                            #check if deleted
+            if Category.getCategoryByCategoryId(categoryId) == None:                                            #check if delete was successful
                 generalCategoryId = Category.getCategoryIdByCategoryName(tempCategory.memberId, "General")      #find the id of the "General" category
                 if generalCategoryId == None:                                                                   # "General" doesnt exist as a category
                     c1 = Category("General", tempCategory.memberId)                                             #create a category object with category name "General"
                     Category.createCategoryByMemberId(c1, tempCategory.memberId)                                #add the object to the db, now there is a "General" category
+                    generalCategoryId = Category.getCategoryIdByCategoryName(tempCategory.memberId, "General")    #now set the category id to the new created general category
                 for tr in tempTransactions:                                                                     #loop though all saved transactions
-                    t1 = Transaction(tr[1], tr[2], tr[3], tr[4], generalCategoryId, tr[6])                      #create a transaction object each iteration from the saved transactions                    
+                    t1 = Transaction(tr[1], tr[2], tr[3], tr[4],generalCategoryId, tr[5])                      #create a transaction object each iteration from the saved transactions                    
                     Transaction.createTransactionByCategoryId(t1,generalCategoryId)                             #add the instance of each transaction to the db
                 print(f"Category: {tempCategory.categoryName} deleted.")
                 return True
             else:
-                print("Failed to delete")
+                print(f"Failed to delete {tempCategory.categoryName}")
                 return False
 
 class Transaction:
@@ -244,6 +245,13 @@ class Transaction:
         if tempCategory == None:
             return False
         else:
+            print(self.transactionName)
+            print(self.transactionType)
+            print(self.amount)
+            print(self.date)
+            print(self.isRecurring)
+            print(self.categoryId)
+            print(self.transactionId)
             try:
                 with conn:
                     cursor.execute('INSERT INTO "transaction" (transaction_name, transaction_type, amount, transaction_date, is_recurring, category_id) VALUES (?, ?, ?, ?, ?, ?)',
@@ -532,7 +540,8 @@ class Transaction:
     def getNextRecurringDateByTransactionId(transactionId):                     
         tempTransaction = Transaction.getTransactionByTransactionId(transactionId)
         if tempTransaction[6] == "Yes":
-            strDate = str(tempTransaction[4])                                             
+            strDate = str(tempTransaction[4])
+            year = int(strDate[0:4])                                          
             month = int(strDate[5:7])
             day = int(strDate[8:10])
             tempDate = datetime.date(year, month, day)
