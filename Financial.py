@@ -1,7 +1,7 @@
 import sqlite3
-import datetime
+from datetime import date, timedelta
 
-currentDate = datetime.date.today()
+currentDate = date.today()
 
 DEFAULT_CATEGORIES = [
     "Groceries", "Shopping", "Restaurants", "Transportation",
@@ -265,7 +265,7 @@ class Transaction:
         year = int(strDate[0:4])
         month = int(strDate[5:7])
         day = int(strDate[8:10])                                                    
-        tempDate = datetime.date(year, month, day)                                  #split the string int year, month , day and save it in a temporary variable
+        tempDate = date(year, month, day)                                  #split the string int year, month , day and save it in a temporary variable
         while tempDate < currentDate:                                               #from the transcation date till todays date
             month += 1                                                              #increment the month by 1 and up to 12(december)
             if month == 13:
@@ -273,16 +273,16 @@ class Transaction:
                 year += 1
             if month == 2 and day > 28:                                            #if the day is 29 or more on february make it 28
                 tempDay = 28
-                tempDate = datetime.date(year, month, tempDay)
+                tempDate = date(year, month, tempDay)
                 tempTransaction = Transaction(transaction.transactionName, transaction.transactionType, transaction.amount, str(tempDate), transaction.categoryId, "No")
                 Transaction.checkRecurringTransactions(tempTransaction)             #check if the transaction has been already added to the db, if not add it
             elif (day == 31) and (month == 4 or month == 6 or month == 9 or month == 11):      #if day is 31, make it 30 on these months
                 tempDay = 30
-                tempDate = datetime.date(year, month, tempDay)
+                tempDate = date(year, month, tempDay)
                 tempTransaction = Transaction(transaction.transactionName, transaction.transactionType, transaction.amount, str(tempDate), transaction.categoryId, "No")
                 Transaction.checkRecurringTransactions(tempTransaction)
             else:                                                                   #for 31 day months check if the transaction has been already added to the db, if not add it 
-                tempDate = datetime.date(year, month, day)
+                tempDate = date(year, month, day)
                 tempTransaction = Transaction(transaction.transactionName, transaction.transactionType, transaction.amount, str(tempDate), transaction.categoryId, "No")
                 Transaction.checkRecurringTransactions(tempTransaction)
 
@@ -315,7 +315,7 @@ class Transaction:
             if month == 0:
                 month = 12
                 year = year - 1                                      
-            tempDate = datetime.date(year, month, day) 
+            tempDate = date(year, month, day) 
             return tempDate
         else:
             return fromDate
@@ -503,8 +503,9 @@ class Transaction:
                 return []
 
     def getTotalByMemberId(memberId):
-        income = Transaction.getAllAmountByMemberIdFilterByTransactionType(memberId, "INCOME")
-        expense = Transaction.getAllAmountByMemberIdFilterByTransactionType(memberId, "EXPENSE")
+        date = currentDate - timedelta(days=7300)
+        income = Transaction.getAllAmountByMemberIdFilterByTransactionType(memberId, "INCOME", date, currentDate)
+        expense = Transaction.getAllAmountByMemberIdFilterByTransactionType(memberId, "EXPENSE", date, currentDate)
         return income - expense
 
     def getAllTransctionsByMemberIdFilterRecurring(memberId, fromDate=None, tillDate=None):      #use getSubscriptions() to get the same list but with the next date of the subscription
@@ -537,7 +538,7 @@ class Transaction:
             year = int(strDate[0:4])                                          
             month = int(strDate[5:7])
             day = int(strDate[8:10])
-            tempDate = datetime.date(year, month, day)
+            tempDate = date(year, month, day)
             while tempDate <= currentDate:
                 month += 1                                                              
                 if month == 13:
@@ -545,12 +546,12 @@ class Transaction:
                     year += 1
                 if month == 2 and day > 28:                                            
                     tempDay = 28
-                    tempDate = datetime.date(year, month, tempDay)
+                    tempDate = date(year, month, tempDay)
                 elif (day == 31) and (month == 4 or month == 6 or month == 9 or month == 11):      
                     tempDay = 30
-                    tempDate = datetime.date(year, month, tempDay)
+                    tempDate = date(year, month, tempDay)
                 else:                                                                   
-                    tempDate = datetime.date(year, month, day)                                     
+                    tempDate = date(year, month, day)                                     
             return tempDate
         else:
             return None
