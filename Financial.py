@@ -561,11 +561,11 @@ class Transaction:
         subscriptions = []
         for tr in transactions:                                                             #loop throught all recurring transactions
             date = Transaction.getNextRecurringDateByTransactionId(tr[0])                   # find the next recurring date for each one
-            subscriptions.append((tr[0], tr[1], tr[2], tr[3], date, tr[5], tr[6], tr[7], tr[8]))  #change only the date to the next months date
+            print(date)
+            print(str(date))
+            subscriptions.append((tr[0], tr[1], tr[2], tr[3], str(date), tr[5], tr[6], tr[7], tr[8]))  #change only the date to the next months date
 
         return subscriptions
-
-
 
 
 def menu():
