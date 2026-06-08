@@ -78,7 +78,7 @@ def recurring_refresh ():
         return
 
     header_refresh()
-    chart.expenses_pie_chart(recurring_fr.top_right_side_fr, user_ID_number, flr_date_from, flr_date_to, "INCOME")
+    chart.income_vrs_expenses(recurring_fr.top_right_side_fr, user_ID_number,flr_date_from, flr_date_to)
     recurring_table.collect_recurring_Transaction(user_ID_number, flr_date_from, flr_date_to)
     recurring_transactions.collect_recurring_data(user_ID_number, flr_date_from, flr_date_to)
     overview_button.configure(state="normal")
@@ -521,7 +521,7 @@ class Recurring_transactions (tk.Frame):
         for  column in self.recurring_table["columns"]:
             self.recurring_table.heading(column, text = column)
             self.recurring_table.column(column, stretch=True)
-        self.recurring_title  = tk.Label(self, text = "Recurring Transactions" , font=( "arial",16,"bold") )
+        self.recurring_title  = tk.Label(self, text = "Upcoming Recurring Transactions" , font=( "arial",16,"bold") )
 
 
         self.scrollbar_y = ttk.Scrollbar(self, orient="vertical", command=self.recurring_table.yview)
@@ -544,7 +544,7 @@ class Recurring_transactions (tk.Frame):
         self.recurring_data.clear()
         iso_date_from = datetime.datetime.strptime(date_from, "%d-%m-%Y").strftime("%Y-%m-%d")
         iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")
-        self.recurring_data.extend(be.Transaction.getAllTransctionsByMemberIdFilterRecurring(user_id, iso_date_from, iso_date_to))
+        self.recurring_data.extend(be.Transaction.getAllTransctionsByMemberIdFilterRecurring(user_id))
         self.recurring_data = [( t[1], t[2], t[3], datetime.datetime.strptime(t[4], "%Y-%m-%d").strftime("%d-%m-%Y"), t[7]) for t in sorted(self.recurring_data,key=lambda x: x[4],reverse=False)]
         for item in self.recurring_table.get_children():
             self.recurring_table.delete(item)
@@ -559,6 +559,7 @@ main= tk.Tk()
 main.title("Finance Manager")
 main.geometry ("400x200")
 main.resizable(False,False)
+main.iconbitmap("finance.ico")
 
 # =========================
 # Login frame
