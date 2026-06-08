@@ -510,6 +510,7 @@ class Transaction:
 
     def getAllTransctionsByMemberIdFilterRecurring(memberId, fromDate=None, tillDate=None):      #use getSubscriptions() to get the same list but with the next date of the subscription
         fromDate = Transaction.setDate(fromDate)
+
         if tillDate == None:
             tillDate = currentDate
         tempMember = Member.getMemberByMemberId(memberId)
@@ -561,10 +562,7 @@ class Transaction:
         subscriptions = []
         for tr in transactions:                                                             #loop throught all recurring transactions
             date = Transaction.getNextRecurringDateByTransactionId(tr[0])                   # find the next recurring date for each one
-            print(date)
-            print(str(date))
             subscriptions.append((tr[0], tr[1], tr[2], tr[3], str(date), tr[5], tr[6], tr[7], tr[8]))  #change only the date to the next months date
-
         return subscriptions
 
 
