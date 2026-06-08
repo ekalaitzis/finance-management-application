@@ -548,8 +548,9 @@ class Recurring_transactions (tk.Frame):
 # =========================
 
 main= tk.Tk()
-main.title("family finance manager")
+main.title("Finance Manager")
 main.geometry ("400x200")
+main.resizable(False,False)
 
 # =========================
 # Login frame
