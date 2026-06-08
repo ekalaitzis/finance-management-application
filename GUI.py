@@ -55,7 +55,7 @@ def overview_refresh ():
     transaction_form.user_id = user_ID_number
     overview_button.configure(state="disabled")
     expenses_button.configure(state="normal")
-    income_button.configure(state="normal")
+    recurring_button.configure(state="normal")
 
 def expenses_refresh ():
     global user_ID_number, flr_date_from, flr_date_to
@@ -69,21 +69,21 @@ def expenses_refresh ():
     expenses_table.collect_type_transaction_per_user(user_ID_number,transaction_type_list[1], flr_date_from, flr_date_to)
     overview_button.configure(state="normal")
     expenses_button.configure(state="disabled")
-    income_button.configure(state="normal")
+    recurring_button.configure(state="normal")
 
-def income_refresh ():
+def recurring_refresh ():
     global user_ID_number, flr_date_from, flr_date_to
 
     if user_ID_number == 0:
         return
 
     header_refresh()
-    chart.expenses_pie_chart(income_fr.top_right_side_fr, user_ID_number,flr_date_from, flr_date_to, "INCOME")
-    income_table.collect_type_transaction_per_user(user_ID_number,transaction_type_list[0], flr_date_from, flr_date_to)
+    chart.expenses_pie_chart(recurring_fr.top_right_side_fr, user_ID_number, flr_date_from, flr_date_to, "INCOME")
+    recurring_table.collect_recurring_Transaction(user_ID_number, flr_date_from, flr_date_to)
     recurring_transactions.collect_recurring_data(user_ID_number, flr_date_from, flr_date_to)
     overview_button.configure(state="normal")
     expenses_button.configure(state="normal")
-    income_button.configure(state="disabled")
+    recurring_button.configure(state="disabled")
 
 def show_dashboard():
 
@@ -110,10 +110,10 @@ def show_overview():
     overview_refresh()
     showing_frame = "overview"
 
-def show_income():
+def show_recurring():
     global showing_frame
-    income_fr.tkraise()
-    income_refresh()
+    recurring_fr.tkraise()
+    recurring_refresh()
     showing_frame = "income"
 
 def show_expenses():
@@ -170,7 +170,7 @@ def filter_button_refresh ():
     elif showing_frame == "expenses":
         expenses_refresh()
     elif showing_frame == "income":
-        income_refresh()
+        recurring_refresh()
 
 def export_data (user_id,date_from, date_to ):
     filter_button_refresh()
@@ -225,9 +225,9 @@ def new_category_window():
     tk.Entry(pop_up_category, textvariable=name_var).grid(row=0, column=1, padx=5, pady=5)
     tk.Button(pop_up_category, text="Submit", command=lambda: [add_new_category(name_var.get()),pop_up_category.destroy()]).grid(row=1, column=1, pady=5)
 
-def on_income_select():
-    income_fr.delete_button.configure(state="normal")
-    income_fr.edit_button.configure(state="normal")
+def on_recurring_select():
+    recurring_fr.delete_button.configure(state="normal")
+    recurring_fr.edit_button.configure(state="normal")
 
 def on_overview_select():
     overview_fr.delete_button.configure(state="normal")
@@ -341,6 +341,14 @@ class Show_transactions (tk.Frame):
         iso_date_from = datetime.datetime.strptime(date_from, "%d-%m-%Y").strftime("%Y-%m-%d")
         iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")
         self.transactions_data.extend(be.Transaction.getAllTransactionsByMemberIdFilterByType(user_id, choose_type, iso_date_from, iso_date_to))
+        self.transactions_data = [(t[0],t[1], t[2], t[3], datetime.datetime.strptime(t[4], "%Y-%m-%d").strftime("%d-%m-%Y"), t[7],t[5]) for t in sorted(self.transactions_data, key=lambda x: x[4], reverse=True)]
+        self.load_data()
+
+    def collect_recurring_Transaction (self,user_id, date_from, date_to):
+        self.transactions_data.clear()
+        iso_date_from = datetime.datetime.strptime(date_from, "%d-%m-%Y").strftime("%Y-%m-%d")
+        iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")
+        self.transactions_data.extend(be.Transaction.getAllTransctionsByMemberIdFilterRecurring(user_id, iso_date_from, iso_date_to))
         self.transactions_data = [(t[0],t[1], t[2], t[3], datetime.datetime.strptime(t[4], "%Y-%m-%d").strftime("%d-%m-%Y"), t[7],t[5]) for t in sorted(self.transactions_data, key=lambda x: x[4], reverse=True)]
         self.load_data()
 
@@ -653,7 +661,7 @@ income_amount = tk.Label(header_fr, text= "Income:" , width= 30, anchor= "w", re
 expenses_amount = tk.Label(header_fr, text= "Expenses:" , width= 30, anchor= "w", relief="groove")
 overview_button = tk.Button (header_fr, text= "Overview",width= 30, anchor= "w", command= show_overview )
 expenses_button = tk.Button (header_fr, text= "Expenses",width= 30, anchor= "w", command=show_expenses)
-income_button = tk.Button (header_fr, text= "Income",width= 30, anchor= "w" , command= show_income)
+recurring_button = tk.Button (header_fr, text="Recurring", width= 30, anchor="w", command= show_recurring)
 new_transaction_button = tk.Button (header_fr, text= "Add Transaction",width= 30, anchor= "w", command= new_transaction_window)
 available_assets= tk.Label(header_fr , text= "Available Assets :" + str(be.Transaction.getTotalByMemberId(user_ID_number)),font=("arial", 16),relief="ridge", bd=5,width= 30 )
 
@@ -664,7 +672,7 @@ income_amount.grid (row= 0 , column= 2 , padx=5 , pady= 5, sticky="w")
 expenses_amount.grid (row= 0 , column= 3 , padx=5 , pady= 5, sticky="w")
 overview_button.grid (row= 1 , column= 0 , padx=5 , pady= 5, sticky="w")
 expenses_button.grid (row= 1 , column= 1 , padx=5 , pady= 5, sticky="w")
-income_button.grid (row= 1 , column= 2 , padx=5 , pady= 5, sticky="w")
+recurring_button.grid (row= 1, column= 2, padx=5, pady= 5, sticky="w")
 new_transaction_button.grid (row= 1 , column= 3 , padx=5 , pady= 5, sticky="w")
 available_assets.grid (row= 0 , column= 4 ,rowspan=2, padx=5 , pady= 5, sticky="w")
 # filter frame
@@ -732,17 +740,17 @@ expenses_table.grid(row= 0 , column= 0 ,columnspan= 4, sticky= "nsew")
 expenses_fr.table = expenses_table
 
 # =========================
-# income Frame
+# Recurring Frame
 # =========================
-income_fr= Basic_navigation_frm (basic_fr)
-income_fr.grid_propagate(False)
-income_fr.grid(row=0, column=0, sticky="nsew")
+recurring_fr= Basic_navigation_frm (basic_fr)
+recurring_fr.grid_propagate(False)
+recurring_fr.grid(row=0, column=0, sticky="nsew")
 
-income_table = Show_transactions(income_fr.left_side_fr,on_select=on_income_select)
-income_table.grid(row= 0 , column= 0 ,columnspan= 4, sticky= "nsew")
-income_fr.table = income_table
+recurring_table = Show_transactions(recurring_fr.left_side_fr, on_select=on_recurring_select)
+recurring_table.grid(row= 0, column= 0, columnspan= 4, sticky="nsew")
+recurring_fr.table = recurring_table
 
-recurring_transactions = Recurring_transactions(income_fr.btm_right_side_fr)
+recurring_transactions = Recurring_transactions(recurring_fr.btm_right_side_fr)
 recurring_transactions.grid(row= 0 , column= 0 , sticky= "nsew")
 
 main.mainloop()
