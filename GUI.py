@@ -536,7 +536,8 @@ class Recurring_transactions (tk.Frame):
         self.recurring_data.clear()
         iso_date_from = datetime.datetime.strptime(date_from, "%d-%m-%Y").strftime("%Y-%m-%d")
         iso_date_to = datetime.datetime.strptime(date_to, "%d-%m-%Y").strftime("%Y-%m-%d")
-        self.recurring_data.extend(be.Transaction.getAllTransctionsByMemberIdFilterRecurring(user_id, iso_date_from, iso_date_to))
+        self.recurring_data.extend(be.Transaction.getAllSubscriptionsByMemberIdFilterRecurring(user_id, iso_date_from, iso_date_to))
+        print("des to table gia " + str(self.recurring_data))
         self.recurring_data = [( t[1], t[2], t[3], datetime.datetime.strptime(t[4], "%Y-%m-%d").strftime("%d-%m-%Y"), t[7]) for t in sorted(self.recurring_data,key=lambda x: x[4],reverse=False)]
         for item in self.recurring_table.get_children():
             self.recurring_table.delete(item)
@@ -548,8 +549,9 @@ class Recurring_transactions (tk.Frame):
 # =========================
 
 main= tk.Tk()
-main.title("family finance manager")
+main.title("Family Finance Manager")
 main.geometry ("400x200")
+main.resizable(False,False)
 
 # =========================
 # Login frame
